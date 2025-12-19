@@ -88,8 +88,8 @@ const Register = ({ onRegisterSuccess }) => {
             }}>
               <div className="card-body p-5">
                 <div className="text-center mb-4">
-                  <h2 style={{ color: 'var(--primary-text)' }}>Create Account</h2>
-                  <p className="text-muted" style={{ color: 'var(--muted-text)' }}>Join Buildex today</p>
+                  <h2>Create Account</h2>
+                  <p className="text-muted">Join Buildex today</p>
                 </div>
 
                 {error && (
@@ -279,11 +279,10 @@ const Register = ({ onRegisterSuccess }) => {
                 </form>
 
                 <div className="text-center mt-4">
-                  <p className="mb-0" style={{ color: 'var(--muted-text)' }}>
+                  <p className="mb-0">
                     Already have an account?{' '}
                     <button 
                       className="btn btn-link p-0 text-decoration-none" 
-                      style={{ color: 'var(--construction-gold)' }}
                       onClick={() => window.location.hash = '/login'}
                     >
                       Sign in

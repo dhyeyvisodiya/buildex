@@ -65,8 +65,8 @@ const Login = ({ onLoginSuccess }) => {
             }}>
               <div className="card-body p-5">
                 <div className="text-center mb-4">
-                  <h2 style={{ color: 'var(--primary-text)' }}>Welcome to Buildex</h2>
-                  <p className="text-muted" style={{ color: 'var(--muted-text)' }}>Sign in to your account</p>
+                  <h2>Welcome to Buildex</h2>
+                  <p className="text-muted">Sign in to your account</p>
                 </div>
 
                 {error && (
@@ -173,11 +173,10 @@ const Login = ({ onLoginSuccess }) => {
                 </form>
 
                 <div className="text-center mt-4">
-                  <p className="mb-0" style={{ color: 'var(--muted-text)' }}>
+                  <p className="mb-0">
                     Don't have an account?{' '}
                     <button 
                       className="btn btn-link p-0 text-decoration-none" 
-                      style={{ color: 'var(--construction-gold)' }}
                       onClick={() => window.location.hash = '/register'}
                     >
                       Register here

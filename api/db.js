@@ -1,16 +1,24 @@
 import { neon } from '@neondatabase/serverless';
+import bcrypt from 'bcryptjs';
 
 // Initialize NeonDB connection with error handling
 let sql;
 try {
-  const databaseUrl = import.meta.env.VITE_DATABASE_URL || process.env.VITE_DATABASE_URL;
-  // Remove any 'psql' prefix if present
-  const cleanUrl = databaseUrl ? databaseUrl.replace(/^psql\s+'(.*)'$/, '$1') : '';
-  if (cleanUrl) {
+  // Try to get the database URL from environment variables
+  const databaseUrl = import.meta.env?.VITE_DATABASE_URL || process.env?.VITE_DATABASE_URL;
+  
+  if (databaseUrl && databaseUrl !== 'postgresql://username:password@host:port/database_name') {
+    // Remove any 'psql' prefix if present
+    const cleanUrl = databaseUrl.replace(/^psql\s+'(.*)'$/, '$1');
     sql = neon(cleanUrl);
+    console.log('Database connected successfully');
   } else {
     // Mock SQL function for development
-    sql = async () => [];
+    sql = async (query, ...params) => {
+      console.warn('No database URL provided, using mock database');
+      console.log('Mock query:', query, params);
+      return [];
+    };
     console.warn('No database URL provided, using mock database');
   }
 } catch (error) {
@@ -49,4 +57,15 @@ export async function initializeDatabase() {
     console.error('Database initialization error:', error);
     throw error;
   }
+}
+
+// Helper function to hash passwords
+export async function hashPassword(password) {
+  const saltRounds = 10;
+  return await bcrypt.hash(password, saltRounds);
+}
+
+// Helper function to compare passwords
+export async function comparePassword(password, hashedPassword) {
+  return await bcrypt.compare(password, hashedPassword);
 }

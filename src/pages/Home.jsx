@@ -85,7 +85,6 @@ const Home = ({ navigateTo }) => {
             <div className="col-md-3">
               <div className="feature-card text-center p-4 rounded h-100 animate__animated animate__fadeInUp" style={{ 
                 backgroundColor: 'var(--card-bg)',
-                color: 'var(--primary-text)',
                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 border: '1px solid var(--card-border)',
                 transition: 'all 0.3s ease'
@@ -114,7 +113,6 @@ const Home = ({ navigateTo }) => {
             <div className="col-md-3">
               <div className="feature-card text-center p-4 rounded h-100 animate__animated animate__fadeInUp animate__delay-1s" style={{ 
                 backgroundColor: 'var(--card-bg)',
-                color: 'var(--primary-text)',
                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 border: '1px solid var(--card-border)',
                 transition: 'all 0.3s ease'
@@ -143,7 +141,6 @@ const Home = ({ navigateTo }) => {
             <div className="col-md-3">
               <div className="feature-card text-center p-4 rounded h-100 animate__animated animate__fadeInUp animate__delay-2s" style={{ 
                 backgroundColor: 'var(--card-bg)',
-                color: 'var(--primary-text)',
                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 border: '1px solid var(--card-border)',
                 transition: 'all 0.3s ease'
@@ -172,7 +169,6 @@ const Home = ({ navigateTo }) => {
             <div className="col-md-3">
               <div className="feature-card text-center p-4 rounded h-100 animate__animated animate__fadeInUp animate__delay-3s" style={{ 
                 backgroundColor: 'var(--card-bg)',
-                color: 'var(--primary-text)',
                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 border: '1px solid var(--card-border)',
                 transition: 'all 0.3s ease'
@@ -210,7 +206,6 @@ const Home = ({ navigateTo }) => {
             <div className="col-md-4">
               <div className="step-card p-4 rounded text-center h-100 animate__animated animate__fadeInUp" style={{ 
                 backgroundColor: 'var(--card-bg)',
-                color: 'var(--primary-text)',
                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 border: '1px solid var(--card-border)',
                 transition: 'all 0.3s ease'
@@ -238,7 +233,6 @@ const Home = ({ navigateTo }) => {
             <div className="col-md-4">
               <div className="step-card p-4 rounded text-center h-100 animate__animated animate__fadeInUp animate__delay-1s" style={{ 
                 backgroundColor: 'var(--card-bg)',
-                color: 'var(--primary-text)',
                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 border: '1px solid var(--card-border)',
                 transition: 'all 0.3s ease'
@@ -266,7 +260,6 @@ const Home = ({ navigateTo }) => {
             <div className="col-md-4">
               <div className="step-card p-4 rounded text-center h-100 animate__animated animate__fadeInUp animate__delay-2s" style={{ 
                 backgroundColor: 'var(--card-bg)',
-                color: 'var(--primary-text)',
                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 border: '1px solid var(--card-border)',
                 transition: 'all 0.3s ease'
