@@ -24,7 +24,7 @@ const AdminDashboard = () => {
   return (
     <div className="admin-dashboard-page animate__animated animate__fadeIn">
       <div className="container-fluid">
-        <h1 className="mb-4 animate__animated animate__fadeInDown" style={{ color: '#C8A24A' }}>Admin Dashboard</h1>
+        <h1 className="mb-4 animate__animated animate__fadeInDown">Admin Dashboard</h1>
         
         {/* Tabs */}
         <ul className="nav nav-tabs mb-4 animate__animated animate__fadeIn">
@@ -32,12 +32,6 @@ const AdminDashboard = () => {
             <button 
               className={`nav-link ${activeTab === 'builders' ? 'active' : ''}`}
               onClick={() => setActiveTab('builders')}
-              style={{
-                color: activeTab === 'builders' ? 'var(--construction-gold)' : 'var(--muted-text)',
-                fontWeight: activeTab === 'builders' ? '600' : 'normal',
-                borderBottom: activeTab === 'builders' ? '3px solid var(--construction-gold)' : 'none',
-                transition: 'all 0.3s ease'
-              }}
             >
               Builder Verification
             </button>
@@ -46,12 +40,6 @@ const AdminDashboard = () => {
             <button 
               className={`nav-link ${activeTab === 'properties' ? 'active' : ''}`}
               onClick={() => setActiveTab('properties')}
-              style={{
-                color: activeTab === 'properties' ? 'var(--construction-gold)' : 'var(--muted-text)',
-                fontWeight: activeTab === 'properties' ? '600' : 'normal',
-                borderBottom: activeTab === 'properties' ? '3px solid var(--construction-gold)' : 'none',
-                transition: 'all 0.3s ease'
-              }}
             >
               Property Monitoring
             </button>
@@ -60,12 +48,6 @@ const AdminDashboard = () => {
             <button 
               className={`nav-link ${activeTab === 'complaints' ? 'active' : ''}`}
               onClick={() => setActiveTab('complaints')}
-              style={{
-                color: activeTab === 'complaints' ? 'var(--construction-gold)' : 'var(--muted-text)',
-                fontWeight: activeTab === 'complaints' ? '600' : 'normal',
-                borderBottom: activeTab === 'complaints' ? '3px solid var(--construction-gold)' : 'none',
-                transition: 'all 0.3s ease'
-              }}
             >
               Complaints
             </button>
@@ -86,7 +68,7 @@ const AdminDashboard = () => {
                   backgroundColor: 'var(--off-white)',
                   borderBottom: '1px solid var(--card-border)'
                 }}>
-                  <h5 className="mb-0" style={{ color: '#C8A24A' }}>Builder Verification</h5>
+                  <h5 className="mb-0">Builder Verification</h5>
                 </div>
                 <div className="card-body">
                   <div className="table-responsive">
@@ -240,7 +222,7 @@ const AdminDashboard = () => {
                   backgroundColor: '#F8FAFC',
                   borderBottom: '1px solid #E2E8F0'
                 }}>
-                  <h5 className="mb-0" style={{ color: '#C8A24A' }}>Property Monitoring</h5>
+                  <h5 className="mb-0">Property Monitoring</h5>
                 </div>
                 <div className="card-body">
                   <div className="table-responsive">
@@ -337,7 +319,7 @@ const AdminDashboard = () => {
                   backgroundColor: '#F8FAFC',
                   borderBottom: '1px solid #E2E8F0'
                 }}>
-                  <h5 className="mb-0" style={{ color: '#C8A24A' }}>Complaints</h5>
+                  <h5 className="mb-0">Complaints</h5>
                 </div>
                 <div className="card-body">
                   <div className="table-responsive">

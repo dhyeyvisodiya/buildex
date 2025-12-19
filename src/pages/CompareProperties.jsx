@@ -6,8 +6,8 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
     return (
       <div className="container-fluid py-5">
         <div className="text-center animate__animated animate__fadeIn">
-          <h2 style={{ color: '#C8A24A' }}>No Properties to Compare</h2>
-          <p style={{ color: '#64748B' }}>Add properties to compare them side by side</p>
+          <h2>No Properties to Compare</h2>
+          <p>No properties to compare yet. Add properties to compare them side by side</p>
           <button 
             className="btn btn-primary mt-3"
             onClick={() => navigateTo('property-list')}
@@ -42,7 +42,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
     <div className="compare-properties-page animate__animated animate__fadeIn">
       <div className="container-fluid">
         <div className="d-flex justify-content-between align-items-center mb-4 animate__animated animate__fadeInDown">
-          <h1 style={{ color: '#C8A24A' }}>Compare Properties</h1>
+          <h1>Compare Properties</h1>
           <button 
             className="btn btn-outline-primary"
             onClick={() => navigateTo('property-list')}
@@ -114,7 +114,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
               </thead>
               <tbody>
                 <tr>
-                  <th scope="row" style={{ color: '#0B1220', fontWeight: '600' }}>Price</th>
+                  <th scope="row">Price</th>
                   {compareList.map(property => (
                     <td key={property.id} className="text-center" style={{ color: '#64748B', fontWeight: '500' }}>
                       {property.purpose === 'Buy' ? property.price : property.rent}
@@ -122,7 +122,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
                   ))}
                 </tr>
                 <tr>
-                  <th scope="row" style={{ color: '#0B1220', fontWeight: '600' }}>Type</th>
+                  <th scope="row">Type</th>
                   {compareList.map(property => (
                     <td key={property.id} className="text-center" style={{ color: '#64748B' }}>
                       {property.type}
@@ -130,7 +130,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
                   ))}
                 </tr>
                 <tr>
-                  <th scope="row" style={{ color: '#0B1220', fontWeight: '600' }}>Area</th>
+                  <th scope="row">Area</th>
                   {compareList.map(property => (
                     <td key={property.id} className="text-center" style={{ color: '#64748B' }}>
                       {property.area}
@@ -138,7 +138,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
                   ))}
                 </tr>
                 <tr>
-                  <th scope="row" style={{ color: '#0B1220', fontWeight: '600' }}>City</th>
+                  <th scope="row">City</th>
                   {compareList.map(property => (
                     <td key={property.id} className="text-center" style={{ color: '#64748B' }}>
                       {property.city}
@@ -146,7 +146,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
                   ))}
                 </tr>
                 <tr>
-                  <th scope="row" style={{ color: '#0B1220', fontWeight: '600' }}>Locality</th>
+                  <th scope="row">Locality</th>
                   {compareList.map(property => (
                     <td key={property.id} className="text-center" style={{ color: '#64748B' }}>
                       {property.locality}
@@ -154,7 +154,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
                   ))}
                 </tr>
                 <tr>
-                  <th scope="row" style={{ color: '#0B1220', fontWeight: '600' }}>Possession</th>
+                  <th scope="row">Possession</th>
                   {compareList.map(property => (
                     <td key={property.id} className="text-center" style={{ color: '#64748B' }}>
                       {property.possession}
@@ -162,7 +162,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
                   ))}
                 </tr>
                 <tr>
-                  <th scope="row" style={{ color: '#0B1220', fontWeight: '600' }}>Amenities</th>
+                  <th scope="row">Amenities</th>
                   {compareList.map(property => (
                     <td key={property.id} className="text-center" style={{ color: '#64748B' }}>
                       {property.amenities && property.amenities.join(', ')}
@@ -170,7 +170,7 @@ const CompareProperties = ({ compareList, removeFromCompare, navigateTo }) => {
                   ))}
                 </tr>
                 <tr>
-                  <th scope="row" style={{ color: '#0B1220', fontWeight: '600' }}>Actions</th>
+                  <th scope="row">Actions</th>
                   {compareList.map(property => (
                     <td key={property.id} className="text-center">
                       <button 

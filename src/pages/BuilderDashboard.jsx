@@ -25,7 +25,7 @@ const BuilderDashboard = () => {
   return (
     <div className="builder-dashboard-page animate__animated animate__fadeIn">
       <div className="container-fluid">
-        <h1 className="mb-4 animate__animated animate__fadeInDown" style={{ color: '#C8A24A' }}>Builder Dashboard</h1>
+        <h1 className="mb-4 animate__animated animate__fadeInDown">Builder Dashboard</h1>
         
         {/* Tabs */}
         <ul className="nav nav-tabs mb-4 animate__animated animate__fadeIn">
@@ -33,12 +33,6 @@ const BuilderDashboard = () => {
             <button 
               className={`nav-link ${activeTab === 'add-property' ? 'active' : ''}`}
               onClick={() => setActiveTab('add-property')}
-              style={{
-                color: activeTab === 'add-property' ? 'var(--construction-gold)' : 'var(--muted-text)',
-                fontWeight: activeTab === 'add-property' ? '600' : 'normal',
-                borderBottom: activeTab === 'add-property' ? '3px solid var(--construction-gold)' : 'none',
-                transition: 'all 0.3s ease'
-              }}
             >
               Add Property
             </button>
@@ -47,12 +41,6 @@ const BuilderDashboard = () => {
             <button 
               className={`nav-link ${activeTab === 'my-properties' ? 'active' : ''}`}
               onClick={() => setActiveTab('my-properties')}
-              style={{
-                color: activeTab === 'my-properties' ? 'var(--construction-gold)' : 'var(--muted-text)',
-                fontWeight: activeTab === 'my-properties' ? '600' : 'normal',
-                borderBottom: activeTab === 'my-properties' ? '3px solid var(--construction-gold)' : 'none',
-                transition: 'all 0.3s ease'
-              }}
             >
               My Properties
             </button>
@@ -61,12 +49,6 @@ const BuilderDashboard = () => {
             <button 
               className={`nav-link ${activeTab === 'buy-enquiries' ? 'active' : ''}`}
               onClick={() => setActiveTab('buy-enquiries')}
-              style={{
-                color: activeTab === 'buy-enquiries' ? 'var(--construction-gold)' : 'var(--muted-text)',
-                fontWeight: activeTab === 'buy-enquiries' ? '600' : 'normal',
-                borderBottom: activeTab === 'buy-enquiries' ? '3px solid var(--construction-gold)' : 'none',
-                transition: 'all 0.3s ease'
-              }}
             >
               Buy Enquiries
             </button>
@@ -75,12 +57,6 @@ const BuilderDashboard = () => {
             <button 
               className={`nav-link ${activeTab === 'rent-requests' ? 'active' : ''}`}
               onClick={() => setActiveTab('rent-requests')}
-              style={{
-                color: activeTab === 'rent-requests' ? 'var(--construction-gold)' : 'var(--muted-text)',
-                fontWeight: activeTab === 'rent-requests' ? '600' : 'normal',
-                borderBottom: activeTab === 'rent-requests' ? '3px solid var(--construction-gold)' : 'none',
-                transition: 'all 0.3s ease'
-              }}
             >
               Rent Requests
             </button>
@@ -89,12 +65,6 @@ const BuilderDashboard = () => {
             <button 
               className={`nav-link ${activeTab === 'tenant-payments' ? 'active' : ''}`}
               onClick={() => setActiveTab('tenant-payments')}
-              style={{
-                color: activeTab === 'tenant-payments' ? 'var(--construction-gold)' : 'var(--muted-text)',
-                fontWeight: activeTab === 'tenant-payments' ? '600' : 'normal',
-                borderBottom: activeTab === 'tenant-payments' ? '3px solid var(--construction-gold)' : 'none',
-                transition: 'all 0.3s ease'
-              }}
             >
               Tenant Payments
             </button>
@@ -115,13 +85,13 @@ const BuilderDashboard = () => {
                   backgroundColor: 'var(--off-white)',
                   borderBottom: '1px solid var(--card-border)'
                 }}>
-                  <h5 className="mb-0" style={{ color: '#C8A24A' }}>Add New Property</h5>
+                  <h5 className="mb-0">Add New Property</h5>
                 </div>
                 <div className="card-body">
                   <form>
                     <div className="row g-3">
                       <div className="col-md-6">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Property Name</label>
+                        <label className="form-label">Property Name</label>
                         <input 
                           type="text" 
                           className="form-control" 
@@ -135,7 +105,7 @@ const BuilderDashboard = () => {
                         />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Property Type</label>
+                        <label className="form-label">Property Type</label>
                         <select 
                           className="form-select"
                           style={{
@@ -152,7 +122,7 @@ const BuilderDashboard = () => {
                         </select>
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Purpose</label>
+                        <label className="form-label">Purpose</label>
                         <select 
                           className="form-select"
                           style={{
@@ -169,7 +139,7 @@ const BuilderDashboard = () => {
                         </select>
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Price/Rent</label>
+                        <label className="form-label">Price/Rent</label>
                         <input 
                           type="text" 
                           className="form-control" 
@@ -184,7 +154,7 @@ const BuilderDashboard = () => {
                         />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Area (sq.ft)</label>
+                        <label className="form-label">Area (sq.ft)</label>
                         <input 
                           type="text" 
                           className="form-control"
@@ -198,7 +168,7 @@ const BuilderDashboard = () => {
                         />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>City</label>
+                        <label className="form-label">City</label>
                         <input 
                           type="text" 
                           className="form-control"
@@ -212,7 +182,7 @@ const BuilderDashboard = () => {
                         />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Locality</label>
+                        <label className="form-label">Locality</label>
                         <input 
                           type="text" 
                           className="form-control"
@@ -226,7 +196,7 @@ const BuilderDashboard = () => {
                         />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Possession Status</label>
+                        <label className="form-label">Possession Status</label>
                         <select 
                           className="form-select"
                           style={{
@@ -244,7 +214,7 @@ const BuilderDashboard = () => {
                         </select>
                       </div>
                       <div className="col-12">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Amenities</label>
+                        <label className="form-label">Amenities</label>
                         <input 
                           type="text" 
                           className="form-control" 
@@ -259,7 +229,7 @@ const BuilderDashboard = () => {
                         />
                       </div>
                       <div className="col-12">
-                        <label className="form-label" style={{ color: 'var(--secondary-text)' }}>Images</label>
+                        <label className="form-label">Images</label>
                         <input 
                           type="file" 
                           className="form-control" 
@@ -319,7 +289,7 @@ const BuilderDashboard = () => {
                   backgroundColor: '#F8FAFC',
                   borderBottom: '1px solid #E2E8F0'
                 }}>
-                  <h5 className="mb-0" style={{ color: '#0B1220' }}>My Properties</h5>
+                  <h5 className="mb-0">My Properties</h5>
                   <button 
                     className="btn btn-sm btn-primary"
                     style={{
@@ -440,7 +410,7 @@ const BuilderDashboard = () => {
                   backgroundColor: '#F8FAFC',
                   borderBottom: '1px solid #E2E8F0'
                 }}>
-                  <h5 className="mb-0" style={{ color: '#0B1220' }}>Buy Enquiries</h5>
+                  <h5 className="mb-0">Buy Enquiries</h5>
                 </div>
                 <div className="card-body">
                   <div className="table-responsive">
@@ -538,7 +508,7 @@ const BuilderDashboard = () => {
                   backgroundColor: '#F8FAFC',
                   borderBottom: '1px solid #E2E8F0'
                 }}>
-                  <h5 className="mb-0" style={{ color: '#0B1220' }}>Rent Requests</h5>
+                  <h5 className="mb-0">Rent Requests</h5>
                 </div>
                 <div className="card-body">
                   <div className="table-responsive">
@@ -636,7 +606,7 @@ const BuilderDashboard = () => {
                   backgroundColor: '#F8FAFC',
                   borderBottom: '1px solid #E2E8F0'
                 }}>
-                  <h5 className="mb-0" style={{ color: '#0B1220' }}>Tenant Payments</h5>
+                  <h5 className="mb-0">Tenant Payments</h5>
                 </div>
                 <div className="card-body">
                   <div className="table-responsive">

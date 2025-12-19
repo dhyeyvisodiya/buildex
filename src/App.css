@@ -383,3 +383,8 @@ textarea.form-control:focus {
   background-color: var(--off-white);
   transform: scale(1.01);
 }
+
+/* Heading Colors */
+h1, h2, h3, h4, h5, h6, strong {
+  color: #C8A24A !important;
+}

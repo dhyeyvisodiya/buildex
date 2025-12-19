@@ -11,9 +11,9 @@ const Home = ({ navigateTo }) => {
         <div className="container-fluid py-5">
           <div className="row align-items-center">
             <div className="col-lg-6">
-              <h1 className="display-4 fw-bold mb-3 animate__animated animate__fadeInUp" style={{ color: 'var(--construction-gold)' }}>Buildex</h1>
-              <p className="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s" style={{ color: 'var(--off-white)' }}>Verified New Schemes & Smart Rental Management</p>
-              <p className="mb-4 animate__animated animate__fadeInUp animate__delay-2s" style={{ color: 'var(--section-divider)' }}>Discover your dream property with our trusted platform. We verify all listings to ensure you get real deals from reliable builders.</p>
+              <h1 className="display-4 fw-bold mb-3 animate__animated animate__fadeInUp">Buildex</h1>
+              <p className="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Verified New Schemes & Smart Rental Management</p>
+              <p className="mb-4 animate__animated animate__fadeInUp animate__delay-2s">Discover your dream property with our trusted platform. We verify all listings to ensure you get real deals from reliable builders.</p>
               <div className="d-flex gap-3 animate__animated animate__fadeInUp animate__delay-3s">
                 <button 
                   className="btn btn-primary px-4 py-2 animate__animated animate__pulse animate__delay-4s"
@@ -80,7 +80,7 @@ const Home = ({ navigateTo }) => {
       {/* Features Section */}
       <section className="features-section py-5 animate__animated animate__fadeIn" style={{ backgroundColor: 'var(--off-white)' }}>
         <div className="container-fluid">
-          <h2 className="text-center mb-5 animate__animated animate__fadeInUp" style={{ color: 'var(--primary-text)' }}>Why Choose Buildex?</h2>
+          <h2 className="text-center mb-5 animate__animated animate__fadeInUp">Why Choose Buildex?</h2>
           <div className="row g-4">
             <div className="col-md-3">
               <div className="feature-card text-center p-4 rounded h-100 animate__animated animate__fadeInUp" style={{ 
@@ -107,8 +107,8 @@ const Home = ({ navigateTo }) => {
                 }}>
                   <i className="bi bi-shield-check"></i>
                 </div>
-                <h5 style={{ color: 'var(--primary-text)' }}>Verified Builders</h5>
-                <p className="text-muted" style={{ color: 'var(--muted-text)' }}>All our builders are verified for authenticity and reliability.</p>
+                <h5>Verified Builders</h5>
+                <p className="text-muted">All our builders are verified for authenticity and reliability.</p>
               </div>
             </div>
             <div className="col-md-3">
@@ -136,8 +136,8 @@ const Home = ({ navigateTo }) => {
                 }}>
                   <i className="bi bi-house-door"></i>
                 </div>
-                <h5 style={{ color: 'var(--primary-text)' }}>New Schemes Only</h5>
-                <p className="text-muted" style={{ color: 'var(--muted-text)' }}>Access to latest property schemes and upcoming projects.</p>
+                <h5>New Schemes Only</h5>
+                <p className="text-muted">Access to latest property schemes and upcoming projects.</p>
               </div>
             </div>
             <div className="col-md-3">
@@ -165,8 +165,8 @@ const Home = ({ navigateTo }) => {
                 }}>
                   <i className="bi bi-camera"></i>
                 </div>
-                <h5 style={{ color: 'var(--primary-text)' }}>360° View</h5>
-                <p className="text-muted" style={{ color: 'var(--muted-text)' }}>Experience properties virtually with our 360° view technology.</p>
+                <h5>360° View</h5>
+                <p className="text-muted">Experience properties virtually with our 360° view technology.</p>
               </div>
             </div>
             <div className="col-md-3">
@@ -194,8 +194,8 @@ const Home = ({ navigateTo }) => {
                 }}>
                   <i className="bi bi-graph-up"></i>
                 </div>
-                <h5 style={{ color: 'var(--primary-text)' }}>Smart Rent Management</h5>
-                <p className="text-muted" style={{ color: 'var(--muted-text)' }}>Efficiently manage your rental properties with our tools.</p>
+                <h5>Smart Rent Management</h5>
+                <p className="text-muted">Efficiently manage your rental properties with our tools.</p>
               </div>
             </div>
           </div>
@@ -205,7 +205,7 @@ const Home = ({ navigateTo }) => {
       {/* How It Works */}
       <section className="how-it-works py-5 animate__animated animate__fadeIn" style={{ backgroundColor: 'var(--card-bg)' }}>
         <div className="container-fluid">
-          <h2 className="text-center mb-5 animate__animated animate__fadeInUp" style={{ color: 'var(--primary-text)' }}>How Buildex Works</h2>
+          <h2 className="text-center mb-5 animate__animated animate__fadeInUp">How Buildex Works</h2>
           <div className="row g-4">
             <div className="col-md-4">
               <div className="step-card p-4 rounded text-center h-100 animate__animated animate__fadeInUp" style={{ 
@@ -231,8 +231,8 @@ const Home = ({ navigateTo }) => {
                 }}>
                   1
                 </div>
-                <h5 style={{ color: 'var(--primary-text)' }}>Browse Properties</h5>
-                <p className="text-muted" style={{ color: 'var(--muted-text)' }}>Explore our curated collection of verified properties for sale or rent.</p>
+                <h5>Browse Properties</h5>
+                <p className="text-muted">Explore our curated collection of verified properties for sale or rent.</p>
               </div>
             </div>
             <div className="col-md-4">
@@ -259,8 +259,8 @@ const Home = ({ navigateTo }) => {
                 }}>
                   2
                 </div>
-                <h5 style={{ color: 'var(--primary-text)' }}>Connect with Builders</h5>
-                <p className="text-muted" style={{ color: 'var(--muted-text)' }}>Direct communication with verified builders and property managers.</p>
+                <h5>Connect with Builders</h5>
+                <p className="text-muted">Direct communication with verified builders and property managers.</p>
               </div>
             </div>
             <div className="col-md-4">
@@ -287,8 +287,8 @@ const Home = ({ navigateTo }) => {
                 }}>
                   3
                 </div>
-                <h5 style={{ color: 'var(--primary-text)' }}>Close the Deal</h5>
-                <p className="text-muted" style={{ color: 'var(--muted-text)' }}>Complete your transaction with our secure and transparent process.</p>
+                <h5>Close the Deal</h5>
+                <p className="text-muted">Complete your transaction with our secure and transparent process.</p>
               </div>
             </div>
           </div>

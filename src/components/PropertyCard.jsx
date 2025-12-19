@@ -51,12 +51,12 @@ const PropertyCard = ({ property, navigateTo, addToCompare, addToWishlist }) => 
       </div>
       
       <div className="card-body d-flex flex-column">
-        <h5 className="card-title" style={{ color: 'var(--primary-text)' }}>{property.name}</h5>
-        <p className="card-text text-muted small" style={{ color: 'var(--muted-text)' }}>{property.locality}, {property.city}</p>
+        <h5 className="card-title">{property.name}</h5>
+        <p className="card-text text-muted small">{property.locality}, {property.city}</p>
         
         <div className="mt-auto">
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <span className="fw-bold fs-5" style={{ color: 'var(--primary-text)' }}>
+            <span className="fw-bold fs-5">
               {property.purpose === 'Buy' ? property.price : property.rent}
             </span>
             <span className="badge" style={{ backgroundColor: 'var(--construction-gold)', color: 'var(--primary-text)' }}>{property.type}</span>

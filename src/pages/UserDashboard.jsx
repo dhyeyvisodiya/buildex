@@ -16,7 +16,7 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
   return (
     <div className="user-dashboard-page animate__animated animate__fadeIn">
       <div className="container-fluid">
-        <h1 className="mb-4 animate__animated animate__fadeInDown" style={{ color: '#C8A24A' }}>User Dashboard</h1>
+        <h1 className="mb-4 animate__animated animate__fadeInDown">User Dashboard</h1>
         
         <div className="row g-4">
           {/* Profile Summary */}
@@ -34,9 +34,9 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
                 }}>
                   <i className="bi bi-person fs-1 text-white"></i>
                 </div>
-                <h4 className="card-title" style={{ color: 'var(--primary-text)' }}>John Doe</h4>
-                <p style={{ color: 'var(--muted-text)' }}>john.doe@example.com</p>
-                <p style={{ color: 'var(--muted-text)' }}>Member since Jan 2023</p>
+                <h4 className="card-title">John Doe</h4>
+                <p>john.doe@example.com</p>
+                <p>Member since Jan 2023</p>
                 <button 
                   className="btn btn-outline-primary"
                   style={{
@@ -75,8 +75,8 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
                 }}>
                   <div className="card-body">
                     <i className="bi bi-heart fs-1 text-danger mb-2"></i>
-                    <h5 className="card-title" style={{ color: 'var(--primary-text)' }}>{wishlist.length}</h5>
-                    <p className="card-text" style={{ color: 'var(--muted-text)' }}>Wishlist Items</p>
+                    <h5 className="card-title">{wishlist.length}</h5>
+                    <p className="card-text">Wishlist Items</p>
                   </div>
                 </div>
               </div>
@@ -88,8 +88,8 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
                 }}>
                   <div className="card-body">
                     <i className="bi bi-envelope fs-1 text-primary mb-2" style={{ color: 'var(--construction-gold)' }}></i>
-                    <h5 className="card-title" style={{ color: 'var(--primary-text)' }}>{enquiries.length}</h5>
-                    <p className="card-text" style={{ color: 'var(--muted-text)' }}>Enquiries</p>
+                    <h5 className="card-title">{enquiries.length}</h5>
+                    <p className="card-text">Enquiries</p>
                   </div>
                 </div>
               </div>
@@ -101,8 +101,8 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
                 }}>
                   <div className="card-body">
                     <i className="bi bi-currency-rupee fs-1 text-success mb-2"></i>
-                    <h5 className="card-title" style={{ color: 'var(--primary-text)' }}>2</h5>
-                    <p className="card-text" style={{ color: 'var(--muted-text)' }}>Active Rentals</p>
+                    <h5 className="card-title">2</h5>
+                    <p className="card-text">Active Rentals</p>
                   </div>
                 </div>
               </div>
@@ -120,7 +120,7 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
                 backgroundColor: 'var(--off-white)',
                 borderBottom: '1px solid var(--card-border)'
               }}>
-                <h5 className="mb-0" style={{ color: '#C8A24A' }}>Your Wishlist</h5>
+                <h5 className="mb-0">Your Wishlist</h5>
                 <button 
                   className="btn btn-sm btn-outline-primary"
                   onClick={() => navigateTo('wishlist')}
@@ -148,7 +148,7 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
               </div>
               <div className="card-body">
                 {wishlist.length === 0 ? (
-                  <p className="text-center" style={{ color: 'var(--muted-text)' }}>No properties in your wishlist yet.</p>
+                  <p className="text-center">No properties in your wishlist yet.</p>
                 ) : (
                   <div className="row g-3">
                     {wishlist.slice(0, 3).map((property, index) => (
@@ -178,11 +178,11 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
                 backgroundColor: 'var(--off-white)',
                 borderBottom: '1px solid var(--card-border)'
               }}>
-                <h5 className="mb-0" style={{ color: '#C8A24A' }}>Recent Enquiries</h5>
+                <h5 className="mb-0">Recent Enquiries</h5>
               </div>
               <div className="card-body">
                 {enquiries.length === 0 ? (
-                  <p className="text-center" style={{ color: 'var(--muted-text)' }}>No enquiries yet.</p>
+                  <p className="text-center">No enquiries yet.</p>
                 ) : (
                   <div className="table-responsive">
                     <table className="table">
@@ -227,11 +227,11 @@ const UserDashboard = ({ wishlist, navigateTo }) => {
                 backgroundColor: 'var(--off-white)',
                 borderBottom: '1px solid var(--card-border)'
               }}>
-                <h5 className="mb-0" style={{ color: '#C8A24A' }}>Rent History</h5>
+                <h5 className="mb-0">Rent History</h5>
               </div>
               <div className="card-body">
                 {rentHistory.length === 0 ? (
-                  <p className="text-center" style={{ color: 'var(--muted-text)' }}>No rent history yet.</p>
+                  <p className="text-center">No rent history yet.</p>
                 ) : (
                   <div className="table-responsive">
                     <table className="table">

@@ -6,7 +6,7 @@ const Wishlist = ({ wishlist, removeFromWishlist, navigateTo }) => {
     <div className="wishlist-page animate__animated animate__fadeIn">
       <div className="container-fluid">
         <div className="d-flex justify-content-between align-items-center mb-4 animate__animated animate__fadeInDown">
-          <h1 style={{ color: '#C8A24A' }}>Your Wishlist</h1>
+          <h1>Your Wishlist</h1>
           <button 
             className="btn btn-outline-primary"
             onClick={() => navigateTo('property-list')}
@@ -38,8 +38,8 @@ const Wishlist = ({ wishlist, removeFromWishlist, navigateTo }) => {
             <div className="mb-4">
               <i className="bi bi-heart" style={{ fontSize: '3rem', color: 'var(--secondary-text)' }}></i>
             </div>
-            <h3 style={{ color: '#C8A24A' }}>Your wishlist is empty</h3>
-            <p style={{ color: 'var(--muted-text)' }}>Save properties that interest you by clicking the heart icon</p>
+            <h3>Your wishlist is empty</h3>
+            <p>Save properties that interest you by clicking the heart icon</p>
             <button 
               className="btn btn-primary mt-3"
               onClick={() => navigateTo('property-list')}

@@ -64,13 +64,13 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
   return (
     <div className="property-list-page animate__animated animate__fadeIn">
       <div className="container-fluid">
-        <h1 className="mb-4 animate__animated animate__fadeInDown" style={{ color: '#C8A24A' }}>Find Your Perfect Property</h1>
+        <h1 className="mb-4 animate__animated animate__fadeInDown">Find Your Perfect Property</h1>
         
         {/* Filter Section */}
         <div className="filter-section mb-4 animate__animated animate__fadeInUp">
           <div className="row g-3">
             <div className="col-md-3">
-              <label className="form-label" style={{ color: '#334155' }}>Property Type</label>
+              <label className="form-label">Property Type</label>
               <select 
                 className="form-select" 
                 name="type" 
@@ -94,7 +94,7 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
             </div>
             
             <div className="col-md-3">
-              <label className="form-label" style={{ color: '#334155' }}>Purpose</label>
+              <label className="form-label">Purpose</label>
               <select 
                 className="form-select" 
                 name="purpose" 
@@ -118,7 +118,7 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
             </div>
             
             <div className="col-md-3">
-              <label className="form-label" style={{ color: '#334155' }}>City</label>
+              <label className="form-label">City</label>
               <select 
                 className="form-select" 
                 name="city" 
@@ -145,7 +145,7 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
             </div>
             
             <div className="col-md-3">
-              <label className="form-label" style={{ color: '#334155' }}>Locality</label>
+              <label className="form-label">Locality</label>
               <select 
                 className="form-select" 
                 name="locality" 
@@ -201,7 +201,7 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
         
         {/* Results Info */}
         <div className="d-flex justify-content-between align-items-center mb-3 animate__animated animate__fadeIn">
-          <h5 style={{ color: '#C8A24A' }}>
+          <h5>
             <span className="badge bg-primary" style={{ backgroundColor: '#C8A24A', color: '#0B1220' }}>
               {filteredProperties.length}
             </span> Properties Found
@@ -227,8 +227,8 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
             <div className="mb-4">
               <i className="bi bi-search" style={{ fontSize: '3rem', color: '#94A3B8' }}></i>
             </div>
-            <h4 style={{ color: '#0B1220' }}>No properties found matching your criteria</h4>
-            <p className="text-muted mb-4" style={{ color: '#64748B' }}>Try adjusting your filters to see more results</p>
+            <h4>No properties found matching your criteria</h4>
+            <p className="text-muted mb-4">Try adjusting your filters to see more results</p>
             <button 
               className="btn btn-primary" 
               onClick={clearFilters}

@@ -82,11 +82,11 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
         {/* Property Header */}
         <div className="row mb-4 animate__animated animate__fadeInUp">
           <div className="col-md-8">
-            <h1 style={{ color: 'var(--primary-text)' }}>{property.name}</h1>
-            <p style={{ color: 'var(--muted-text)' }}>{property.locality}, {property.city}</p>
+            <h1>{property.name}</h1>
+            <p>{property.locality}, {property.city}</p>
           </div>
           <div className="col-md-4 text-md-end">
-            <h2 style={{ color: 'var(--primary-text)' }}>{property.purpose === 'Buy' ? property.price : property.rent}</h2>
+            <h2>{property.purpose === 'Buy' ? property.price : property.rent}</h2>
             <span className={`badge ${getAvailabilityClass(property.availability)} fs-6`}>
               {getAvailabilityText(property.availability)}
             </span>
@@ -256,26 +256,26 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
           {/* Details Section */}
           <div className="col-lg-8">
             <div className="details-section mb-5 animate__animated animate__fadeInUp animate__delay-2s">
-              <h3 style={{ color: '#0B1220' }}>Property Details</h3>
+              <h3>Property Details</h3>
               <div className="row g-3">
                 <div className="col-md-6">
-                  <p style={{ color: '#64748B' }}><strong style={{ color: '#0B1220' }}>Property Type:</strong> {property.type}</p>
+                  <p><strong>Property Type:</strong> {property.type}</p>
                 </div>
                 <div className="col-md-6">
-                  <p style={{ color: '#64748B' }}><strong style={{ color: '#0B1220' }}>Area:</strong> {property.area}</p>
+                  <p><strong>Area:</strong> {property.area}</p>
                 </div>
                 <div className="col-md-6">
-                  <p style={{ color: '#64748B' }}><strong style={{ color: '#0B1220' }}>Possession:</strong> {property.possession}</p>
+                  <p><strong>Possession:</strong> {property.possession}</p>
                 </div>
                 <div className="col-md-6">
-                  <p style={{ color: '#64748B' }}><strong style={{ color: '#0B1220' }}>Construction Status:</strong> {property.constructionStatus}</p>
+                  <p><strong>Construction Status:</strong> {property.constructionStatus}</p>
                 </div>
                 <div className="col-md-6">
-                  <p style={{ color: '#64748B' }}><strong style={{ color: '#0B1220' }}>Purpose:</strong> {property.purpose}</p>
+                  <p><strong>Purpose:</strong> {property.purpose}</p>
                 </div>
               </div>
               
-              <h4 className="mt-4" style={{ color: '#0B1220' }}>Amenities</h4>
+              <h4 className="mt-4">Amenities</h4>
               <div className="row g-2">
                 {property.amenities && property.amenities.map((amenity, index) => (
                   <div className="col-auto" key={index}>
@@ -287,7 +287,7 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
 
             {/* Map Section */}
             <div className="map-section mb-5 animate__animated animate__fadeInUp animate__delay-3s">
-              <h3 style={{ color: '#0B1220' }}>Location</h3>
+              <h3>Location</h3>
               <div className="map-container bg-light rounded" style={{ height: '300px', overflow: 'hidden' }}>
                 <iframe 
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3770.778553750634!2d72.8771903148513!3d19.07609018708716!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c6306644edc1%3A0x5da4ed8f8d648c69!2sMumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1652971200000!5m2!1sen!2sin" 
@@ -303,11 +303,11 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
 
             {/* 360 View Section */}
             <div className="view-section mb-5 animate__animated animate__fadeInUp animate__delay-4s">
-              <h3 style={{ color: '#0B1220' }}>360° Virtual Tour</h3>
+              <h3>360° Virtual Tour</h3>
               <div className="street-view rounded" style={{ backgroundColor: '#F1F5F9' }}>
                 <div className="text-center p-5">
                   <i className="bi bi-camera fs-1 mb-3" style={{ color: '#94A3B8' }}></i>
-                  <p style={{ color: '#64748B' }}>Interactive 360° view of the property</p>
+                  <p>Interactive 360° view of the property</p>
                   <button 
                     className="btn btn-primary"
                     style={{
@@ -345,8 +345,8 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
                 border: '1px solid #E2E8F0'
               }}>
                 <div className="card-body">
-                  <h4 className="card-title" style={{ color: '#0B1220' }}>Interested in this property?</h4>
-                  <p className="card-text" style={{ color: '#64748B' }}>Get in touch with our experts for more information.</p>
+                  <h4 className="card-title">Interested in this property?</h4>
+                  <p className="card-text">Get in touch with our experts for more information.</p>
                   
                   {property.purpose === 'Buy' ? (
                     <button 
