@@ -1,5 +1,38 @@
-import sql from './db.js';
 import bcrypt from 'bcryptjs';
+
+// Mock database for development
+const mockUsers = [
+  {
+    id: 1,
+    username: 'admin',
+    email: 'admin@example.com',
+    password: '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', // 'password123'
+    full_name: 'Admin User',
+    phone: '+919999999999',
+    role: 'admin',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    username: 'builder',
+    email: 'builder@example.com',
+    password: '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', // 'password123'
+    full_name: 'Builder User',
+    phone: '+919999999998',
+    role: 'builder',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    username: 'user',
+    email: 'user@example.com',
+    password: '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', // 'password123'
+    full_name: 'Regular User',
+    phone: '+919999999997',
+    role: 'user',
+    created_at: new Date().toISOString()
+  }
+];
 
 // Register a new user
 export async function registerUser({ username, email, password, fullName, phone, role = 'user' }) {
@@ -10,37 +43,41 @@ export async function registerUser({ username, email, password, fullName, phone,
     }
 
     // Check if user already exists
-    const existingUser = await sql`
-      SELECT id FROM users WHERE email = ${email} OR username = ${username}
-    `;
+    const existingUser = mockUsers.find(u => u.email === email || u.username === username);
 
-    if (existingUser.length > 0) {
+    if (existingUser) {
       throw new Error('User already exists with this email or username');
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user
-    const result = await sql`
-      INSERT INTO users (username, email, password, full_name, phone, role)
-      VALUES (${username}, ${email}, ${hashedPassword}, ${fullName || null}, ${phone || null}, ${role})
-      RETURNING id, username, email, full_name, phone, role, created_at
-    `;
+    // Create new user
+    const newUser = {
+      id: mockUsers.length + 1,
+      username,
+      email,
+      password: hashedPassword,
+      full_name: fullName || null,
+      phone: phone || null,
+      role,
+      created_at: new Date().toISOString()
+    };
 
-    const user = result[0];
-    
+    // Add to mock users (in real app, this would be saved to database)
+    mockUsers.push(newUser);
+
     return {
       success: true,
       message: 'User registered successfully',
       user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        fullName: user.full_name,
-        phone: user.phone,
-        role: user.role,
-        createdAt: user.created_at
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        fullName: newUser.full_name,
+        phone: newUser.phone,
+        role: newUser.role,
+        createdAt: newUser.created_at
       }
     };
   } catch (error) {
@@ -58,15 +95,11 @@ export async function loginUser({ email, password }) {
     }
 
     // Find user by email
-    const result = await sql`
-      SELECT * FROM users WHERE email = ${email}
-    `;
+    const user = mockUsers.find(u => u.email === email);
 
-    if (result.length === 0) {
+    if (!user) {
       throw new Error('Invalid email or password');
     }
-
-    const user = result[0];
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -97,17 +130,12 @@ export async function loginUser({ email, password }) {
 // Get user by ID
 export async function getUserById(userId) {
   try {
-    const result = await sql`
-      SELECT id, username, email, full_name, phone, role, created_at 
-      FROM users 
-      WHERE id = ${userId}
-    `;
+    const user = mockUsers.find(u => u.id == userId);
 
-    if (result.length === 0) {
+    if (!user) {
       throw new Error('User not found');
     }
 
-    const user = result[0];
     return {
       id: user.id,
       username: user.username,

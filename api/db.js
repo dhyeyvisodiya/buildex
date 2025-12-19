@@ -1,7 +1,23 @@
 import { neon } from '@neondatabase/serverless';
 
-// Initialize NeonDB connection
-const sql = neon(import.meta.env.VITE_DATABASE_URL || process.env.VITE_DATABASE_URL);
+// Initialize NeonDB connection with error handling
+let sql;
+try {
+  const databaseUrl = import.meta.env.VITE_DATABASE_URL || process.env.VITE_DATABASE_URL;
+  // Remove any 'psql' prefix if present
+  const cleanUrl = databaseUrl ? databaseUrl.replace(/^psql\s+'(.*)'$/, '$1') : '';
+  if (cleanUrl) {
+    sql = neon(cleanUrl);
+  } else {
+    // Mock SQL function for development
+    sql = async () => [];
+    console.warn('No database URL provided, using mock database');
+  }
+} catch (error) {
+  console.error('Failed to initialize database connection:', error);
+  // Mock SQL function for development
+  sql = async () => [];
+}
 
 export default sql;
 
