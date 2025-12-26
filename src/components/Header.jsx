@@ -177,9 +177,16 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
                       style={{ color: 'rgba(255, 255, 255, 0.9)' }}
                     >
                       <i className="bi bi-person-circle me-1"></i>
-                      {currentUser.fullName || currentUser.name}
+                      <span className="ms-1">{currentUser.fullName || currentUser.username || currentUser.email.split('@')[0]}</span>
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn">
+                      <li className="dropdown-header">
+                        Signed in as<br />
+                        <strong>{currentUser.fullName || currentUser.username || currentUser.email}</strong>
+                      </li>
+                      <li>
+                        <hr className="dropdown-divider" />
+                      </li>
                       <li>
                         <button 
                           className="dropdown-item" 
