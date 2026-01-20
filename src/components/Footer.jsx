@@ -1,7 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Footer = ({ navigateTo }) => {
+const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const navigate = useNavigate();
+
+  const navigateTo = (path) => {
+    navigate(path === 'home' ? '/' : `/${path}`);
+  };
 
   return (
     <footer style={{

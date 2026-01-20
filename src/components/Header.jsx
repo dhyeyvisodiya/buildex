@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentUser, onLogout }) => {
+const Header = ({ compareCount, wishlistCount }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { currentUser, logout } = useAuth();
+
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
 
   return (
     <header className="shadow-sm" style={{
@@ -18,7 +27,7 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
           <div className="container-fluid">
             <button
               className="navbar-brand btn btn-link text-decoration-none d-flex align-items-center"
-              onClick={() => navigateTo('home')}
+              onClick={() => navigate('/')}
               style={{
                 transition: 'all 0.3s ease',
                 padding: '0'
@@ -59,18 +68,18 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
               <ul className="navbar-nav me-auto">
                 <li className="nav-item">
                   <button
-                    className={`nav-link btn btn-link text-decoration-none ${currentPage === 'home' ? 'fw-bold' : ''}`}
+                    className={`nav-link btn btn-link text-decoration-none ${isActive('/') ? 'fw-bold' : ''}`}
                     style={{
-                      color: currentPage === 'home' ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)',
+                      color: isActive('/') ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)',
                       position: 'relative',
                       transition: 'all 0.3s ease'
                     }}
-                    onClick={() => { navigateTo('home'); setIsMenuOpen(false); }}
+                    onClick={() => { navigate('/'); setIsMenuOpen(false); }}
                     onMouseEnter={(e) => e.target.style.color = '#C8A24A'}
-                    onMouseLeave={(e) => e.target.style.color = currentPage === 'home' ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)'}
+                    onMouseLeave={(e) => e.target.style.color = isActive('/') ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)'}
                   >
                     Home
-                    {currentPage === 'home' && (
+                    {isActive('/') && (
                       <span style={{
                         position: 'absolute',
                         bottom: '-5px',
@@ -86,18 +95,18 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
                 </li>
                 <li className="nav-item">
                   <button
-                    className={`nav-link btn btn-link text-decoration-none ${currentPage === 'property-list' ? 'fw-bold' : ''}`}
+                    className={`nav-link btn btn-link text-decoration-none ${isActive('/property-list') ? 'fw-bold' : ''}`}
                     style={{
-                      color: currentPage === 'property-list' ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)',
+                      color: isActive('/property-list') ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)',
                       position: 'relative',
                       transition: 'all 0.3s ease'
                     }}
-                    onClick={() => { navigateTo('property-list'); setIsMenuOpen(false); }}
+                    onClick={() => { navigate('/property-list'); setIsMenuOpen(false); }}
                     onMouseEnter={(e) => e.target.style.color = '#C8A24A'}
-                    onMouseLeave={(e) => e.target.style.color = currentPage === 'property-list' ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)'}
+                    onMouseLeave={(e) => e.target.style.color = isActive('/property-list') ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)'}
                   >
                     Properties
-                    {currentPage === 'property-list' && (
+                    {isActive('/property-list') && (
                       <span style={{
                         position: 'absolute',
                         bottom: '-5px',
@@ -113,18 +122,18 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
                 </li>
                 <li className="nav-item">
                   <button
-                    className={`nav-link btn btn-link text-decoration-none ${currentPage === 'compare' ? 'fw-bold' : ''}`}
+                    className={`nav-link btn btn-link text-decoration-none ${isActive('/compare') ? 'fw-bold' : ''}`}
                     style={{
-                      color: currentPage === 'compare' ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)',
+                      color: isActive('/compare') ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)',
                       position: 'relative',
                       transition: 'all 0.3s ease'
                     }}
-                    onClick={() => { navigateTo('compare'); setIsMenuOpen(false); }}
+                    onClick={() => { navigate('/compare'); setIsMenuOpen(false); }}
                     onMouseEnter={(e) => e.target.style.color = '#C8A24A'}
-                    onMouseLeave={(e) => e.target.style.color = currentPage === 'compare' ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)'}
+                    onMouseLeave={(e) => e.target.style.color = isActive('/compare') ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)'}
                   >
                     Compare {compareCount > 0 && <span className="badge bg-primary" style={{ backgroundColor: '#C8A24A' }}>{compareCount}</span>}
-                    {currentPage === 'compare' && (
+                    {isActive('/compare') && (
                       <span style={{
                         position: 'absolute',
                         bottom: '-5px',
@@ -140,18 +149,18 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
                 </li>
                 <li className="nav-item">
                   <button
-                    className={`nav-link btn btn-link text-decoration-none ${currentPage === 'wishlist' ? 'fw-bold' : ''}`}
+                    className={`nav-link btn btn-link text-decoration-none ${isActive('/wishlist') ? 'fw-bold' : ''}`}
                     style={{
-                      color: currentPage === 'wishlist' ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)',
+                      color: isActive('/wishlist') ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)',
                       position: 'relative',
                       transition: 'all 0.3s ease'
                     }}
-                    onClick={() => { navigateTo('wishlist'); setIsMenuOpen(false); }}
+                    onClick={() => { navigate('/wishlist'); setIsMenuOpen(false); }}
                     onMouseEnter={(e) => e.target.style.color = '#C8A24A'}
-                    onMouseLeave={(e) => e.target.style.color = currentPage === 'wishlist' ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)'}
+                    onMouseLeave={(e) => e.target.style.color = isActive('/wishlist') ? '#C8A24A' : 'rgba(255, 255, 255, 0.9)'}
                   >
                     Wishlist {wishlistCount > 0 && <span className="badge bg-primary" style={{ backgroundColor: '#C8A24A' }}>{wishlistCount}</span>}
-                    {currentPage === 'wishlist' && (
+                    {isActive('/wishlist') && (
                       <span style={{
                         position: 'absolute',
                         bottom: '-5px',
@@ -192,11 +201,11 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
                           className="dropdown-item"
                           onClick={() => {
                             if (currentUser.role === 'admin') {
-                              navigateTo('admin-dashboard');
+                              navigate('/admin-dashboard');
                             } else if (currentUser.role === 'builder') {
-                              navigateTo('builder-dashboard');
+                              navigate('/builder-dashboard');
                             } else {
-                              navigateTo('user-dashboard');
+                              navigate('/user-dashboard');
                             }
                             setIsMenuOpen(false);
                           }}
@@ -214,7 +223,7 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
                       <li>
                         <button
                           className="dropdown-item"
-                          onClick={() => { onLogout(); setIsMenuOpen(false); }}
+                          onClick={() => { logout(); setIsMenuOpen(false); navigate('/login'); }}
                           style={{ transition: 'all 0.2s ease' }}
                           onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
                           onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
@@ -231,7 +240,7 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
                     <li className="nav-item">
                       <button
                         className="btn btn-outline-primary me-2"
-                        onClick={() => navigateTo('login')}
+                        onClick={() => navigate('/login')}
                         style={{
                           border: '1px solid #FFFFFF',
                           color: '#FFFFFF',
@@ -261,7 +270,7 @@ const Header = ({ currentPage, navigateTo, compareCount, wishlistCount, currentU
                     <li className="nav-item">
                       <button
                         className="btn btn-primary"
-                        onClick={() => navigateTo('register')}
+                        onClick={() => navigate('/register')}
                         style={{
                           background: '#C8A24A',
                           border: 'none',

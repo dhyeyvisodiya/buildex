@@ -11,6 +11,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pendingRegistration, setPendingRegistration] = useState(null);
 
   // Initialize database on mount
   useEffect(() => {
@@ -85,11 +86,36 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        const user = data.user;
-        setCurrentUser(user);
-        localStorage.setItem('buildex_user', JSON.stringify(user));
+        // Backend verification successful. Now create user in local DB.
+        if (!pendingRegistration || pendingRegistration.email !== email) {
+          setLoading(false);
+          return { success: false, message: "Registration session expired. Please try again." };
+        }
+
+        const { username, password, full_name, phone, role } = pendingRegistration;
+
+        // Hash the password
+        const hashedPassword = await hashPassword(password);
+
+        // Insert new user into database
+        const result = await sql`
+            INSERT INTO users (username, email, password, full_name, phone, role)
+            VALUES (${username}, ${email}, ${hashedPassword}, ${full_name}, ${phone}, ${role})
+            RETURNING id, username, email, full_name, phone, role
+        `;
+
+        if (result.length === 0) {
+          setLoading(false);
+          return { success: false, message: "Failed to create user record." };
+        }
+
+        const newUser = result[0];
+        setCurrentUser(newUser);
+        localStorage.setItem('buildex_user', JSON.stringify(newUser));
+        setPendingRegistration(null);
         setLoading(false);
-        return { success: true, user };
+        return { success: true, user: newUser };
+
       } else {
         setLoading(false);
         return { success: false, message: data.message || "Invalid OTP" };
@@ -104,7 +130,24 @@ export const AuthProvider = ({ children }) => {
   const register = async (username, email, password, fullName, phone, role = "user") => {
     setLoading(true);
 
-    // Attempt Backend Registration (for OTP)
+    // 1. Check if user already exists in DB
+    try {
+      const existingUser = await sql`
+        SELECT id FROM users WHERE email = ${email} OR username = ${username}
+        `;
+
+      if (existingUser.length > 0) {
+        setLoading(false);
+        return { success: false, message: "User with this email or username already exists" };
+      }
+    } catch (dbError) {
+      console.warn("DB check failed", dbError);
+      // Continue? If DB is unreadable, we probably can't register anyway.
+      setLoading(false);
+      return { success: false, message: "Database connection failed" };
+    }
+
+    // 2. Send OTP via Backend
     try {
       const response = await fetch(`${BACKEND_URL}/auth/register`, {
         method: 'POST',
@@ -114,54 +157,23 @@ export const AuthProvider = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Backend should return { success: true, message: 'OTP Sent' }
         if (data.success) {
+          // Store pending data for later insertion
+          setPendingRegistration({ username, email, password, full_name: fullName, phone, role });
           setLoading(false);
           return { success: true, requiresOtp: true, message: "OTP sent to email" };
+        } else {
+          setLoading(false);
+          return { success: false, message: data.message || "Failed to send OTP" };
         }
+      } else {
+        setLoading(false);
+        return { success: false, message: "Backend service error" };
       }
     } catch (backendError) {
-      console.warn("Backend registration failed, falling back to direct DB insert (Dev Mode)", backendError);
-      // Fallback to original logic below
-    }
-
-    try {
-      // Check if user already exists
-      const existingUser = await sql`
-        SELECT id FROM users WHERE email = ${email} OR username = ${username}
-      `;
-
-      if (existingUser.length > 0) {
-        setLoading(false);
-        return { success: false, message: "User with this email or username already exists" };
-      }
-
-      // Hash the password before storing
-      const hashedPassword = await hashPassword(password);
-
-      // Insert new user into database
-      const result = await sql`
-        INSERT INTO users (username, email, password, full_name, phone, role)
-        VALUES (${username}, ${email}, ${hashedPassword}, ${fullName}, ${phone}, ${role})
-        RETURNING id, username, email, full_name, phone, role
-      `;
-
-      if (result.length === 0) {
-        setLoading(false);
-        return { success: false, message: "Registration failed" };
-      }
-
-      const newUser = result[0];
-
-      setCurrentUser(newUser);
-      localStorage.setItem('buildex_user', JSON.stringify(newUser));
+      console.error("Backend registration failed", backendError);
       setLoading(false);
-      // requiresOtp: false means legacy flow success
-      return { success: true, user: newUser, requiresOtp: false };
-    } catch (error) {
-      setLoading(false);
-      console.error('Registration error:', error);
-      return { success: false, message: error.message || "Registration failed" };
+      return { success: false, message: "Registration service unavailable. Please check your connection." };
     }
   };
 

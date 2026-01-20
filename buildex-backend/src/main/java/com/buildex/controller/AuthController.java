@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*") // Allow frontend access
 public class AuthController {
 
@@ -24,6 +23,15 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final OtpService otpService;
+
+    // Explicit constructor instead of @RequiredArgsConstructor
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService,
+            OtpService otpService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+        this.otpService = otpService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
@@ -91,19 +99,81 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("success", true, "user", userData));
     }
 
-    @Data
-    static class RegisterRequest {
+    public static class RegisterRequest {
         private String username;
         private String email;
         private String password;
         private String full_name;
         private String phone;
         private String role;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getFull_name() {
+            return full_name;
+        }
+
+        public void setFull_name(String full_name) {
+            this.full_name = full_name;
+        }
+
+        public String getPhone() {
+            return phone;
+        }
+
+        public void setPhone(String phone) {
+            this.phone = phone;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
     }
 
-    @Data
-    static class VerifyRequest {
+    public static class VerifyRequest {
         private String email;
         private String otp;
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getOtp() {
+            return otp;
+        }
+
+        public void setOtp(String otp) {
+            this.otp = otp;
+        }
     }
 }

@@ -1,17 +1,101 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import EMICalculator from '../components/EMICalculator';
-import { createEnquiry, createRentRequest } from '../../api/apiService';
+import PropertyMap from '../components/PropertyMap';
+import PanoramaViewer from '../components/PanoramaViewer';
+import PaymentButton from '../components/PaymentButton';
+import { createEnquiry, createRentRequest, getPropertyById } from '../../api/apiService';
 import { useAuth } from '../contexts/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) => {
+const PropertyDetail = ({ addToCompare, addToWishlist }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [property, setProperty] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showEnquiryModal, setShowEnquiryModal] = useState(false);
-  const [showRentModal, setShowRentModal] = useState(false);
+  const [showEnquiryForm, setShowEnquiryForm] = useState(false);
+  const [showRentForm, setShowRentForm] = useState(false);
+  const [showVisitForm, setShowVisitForm] = useState(false);
   const [showEMICalculator, setShowEMICalculator] = useState(false);
   const { currentUser } = useAuth();
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    const fetchProperty = async () => {
+      setIsLoading(true);
+      if (id) {
+        const result = await getPropertyById(id);
+        if (result.success) {
+          setProperty(result.data);
+        }
+      }
+      setIsLoading(false);
+    };
+    fetchProperty();
+  }, [id]);
+
+  const formatCurrency = (value) => {
+    if (!value) return '';
+    const valStr = value.toString().replace(/,/g, '').replace('₹', '').replace(/\s/g, '');
+    const num = parseFloat(valStr);
+    if (isNaN(num)) return value;
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num);
+  };
+
+  // Helper to convert Google Maps URL to embed URL
+  const getEmbedMapUrl = (url) => {
+    if (!url) return null;
+
+    // If it's already an embed URL, return as is
+    if (url.includes('google.com/maps/embed')) {
+      return url;
+    }
+
+    try {
+      // Method 1: Extract coordinates from URL (@lat,lng format)
+      const coordMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+      if (coordMatch) {
+        const lat = coordMatch[1];
+        const lng = coordMatch[2];
+        return `https://maps.google.com/maps?q=${lat},${lng}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+      }
+
+      // Method 2: Extract place name from /place/PlaceName format
+      const placeMatch = url.match(/place\/([^/@]+)/);
+      if (placeMatch) {
+        const place = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+        return `https://maps.google.com/maps?q=${encodeURIComponent(place)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+      }
+
+      // Method 3: Extract query parameter
+      const qMatch = url.match(/[?&]q=([^&]+)/);
+      if (qMatch) {
+        const query = qMatch[1];
+        return `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+      }
+
+      // Method 4: If URL is just a location name (no http), use it directly
+      if (!url.startsWith('http')) {
+        return `https://maps.google.com/maps?q=${encodeURIComponent(url)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+      }
+
+      // Method 5: For goo.gl or maps.app short links, return null (can't embed short links)
+      // User should paste location name instead
+      if (url.includes('goo.gl') || url.includes('maps.app')) {
+        console.warn('Short Google Maps URLs cannot be embedded. Please use a location name or full URL.');
+        return null;
+      }
+
+      // Fallback: Return null to not render the map section
+      return null;
+    } catch (e) {
+      console.error('Error parsing Google Maps URL:', e);
+      return null;
+    }
+  };
 
   // Form states
   const [enquiryForm, setEnquiryForm] = useState({
@@ -29,12 +113,78 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
     message: ''
   });
 
+  const [visitForm, setVisitForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    visitDate: '',
+    message: ''
+  });
+
+  const toggleForm = (formName) => {
+    if (formName === 'enquiry') {
+      setShowEnquiryForm(!showEnquiryForm);
+      setShowRentForm(false);
+      setShowVisitForm(false);
+      setShowEMICalculator(false);
+    } else if (formName === 'rent') {
+      setShowRentForm(!showRentForm);
+      setShowEnquiryForm(false);
+      setShowVisitForm(false);
+      setShowEMICalculator(false);
+    } else if (formName === 'visit') {
+      setShowVisitForm(!showVisitForm);
+      setShowEnquiryForm(false);
+      setShowRentForm(false);
+      setShowEMICalculator(false);
+    } else if (formName === 'emi') {
+      setShowEMICalculator(!showEMICalculator);
+      setShowEnquiryForm(false);
+      setShowRentForm(false);
+      setShowVisitForm(false);
+    }
+  };
+
   const handleEnquiryChange = (e) => {
     setEnquiryForm({ ...enquiryForm, [e.target.name]: e.target.value });
   };
 
   const handleRentChange = (e) => {
     setRentForm({ ...rentForm, [e.target.name]: e.target.value });
+  };
+
+  const handleVisitChange = (e) => {
+    setVisitForm({ ...visitForm, [e.target.name]: e.target.value });
+  };
+
+  const handleVisitSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const visitMessage = `[Visit Request for ${visitForm.visitDate}] ${visitForm.message}`;
+      // Reuse createEnquiry for now, or createVisitRequest if API exists
+      const result = await createEnquiry({
+        propertyId: property.id,
+        ...visitForm,
+        message: visitMessage,
+        userId: currentUser ? currentUser.id : null
+      });
+
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Visit scheduled successfully!' });
+        setTimeout(() => {
+          setShowVisitForm(false);
+          setMessage({ type: '', text: '' });
+          setVisitForm({ fullName: '', email: '', phone: '', visitDate: '', message: '' });
+        }, 2000);
+      } else {
+        setMessage({ type: 'error', text: result.message || 'Failed to schedule visit' });
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage({ type: 'error', text: 'An error occurred.' });
+    }
+    setSubmitting(false);
   };
 
   const handleEnquirySubmit = async (e) => {
@@ -51,7 +201,7 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
       if (result.success) {
         setMessage({ type: 'success', text: 'Enquiry sent successfully!' });
         setTimeout(() => {
-          setShowEnquiryModal(false);
+          setShowEnquiryForm(false);
           setMessage({ type: '', text: '' });
           setEnquiryForm({ fullName: '', email: '', phone: '', message: '' });
         }, 2000);
@@ -95,7 +245,7 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
       if (result.success) {
         setMessage({ type: 'success', text: 'Rent request sent successfully!' });
         setTimeout(() => {
-          setShowRentModal(false);
+          setShowRentForm(false);
           setMessage({ type: '', text: '' });
           setRentForm({ fullName: '', email: '', phone: '', moveInDate: '', message: '' });
         }, 2000);
@@ -133,12 +283,39 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container-fluid py-5" style={{ minHeight: '80vh', background: 'var(--page-bg)' }}>
+        <div className="text-center" style={{ paddingTop: '100px' }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            border: '4px solid rgba(200,162,74,0.2)',
+            borderTop: '4px solid #C8A24A',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 24px'
+          }}></div>
+          <h4 style={{ color: '#C8A24A', marginBottom: '8px' }}>Loading Property Details</h4>
+          <p style={{ color: '#64748B' }}>Please wait while we fetch the property information...</p>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
+
   if (!property) {
     return (
       <div className="container-fluid py-5">
         <div className="text-center">
           <h2>Property not found</h2>
-          <button className="btn btn-primary mt-3" onClick={() => navigateTo('property-list')}>
+          <button className="btn btn-primary mt-3" onClick={() => navigate('/property-list')}>
             Back to Properties
           </button>
         </div>
@@ -183,7 +360,7 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
         <div className="mb-3">
           <button
             className="btn btn-outline-primary"
-            onClick={() => navigateTo('property-list')}
+            onClick={() => navigate('/property-list')}
             style={{
               borderRadius: '8px',
               fontWeight: '600',
@@ -216,7 +393,7 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
             </p>
           </div>
           <div className="col-md-4 text-md-end">
-            <h2>{property.purpose === 'Buy' ? property.price : property.rent}</h2>
+            <h2 style={{ color: '#C8A24A' }}>{property.purpose === 'Buy' ? formatCurrency(property.price) : `${formatCurrency(property.rent)}/mo`}</h2>
             <span className={`badge ${getAvailabilityClass(property.availability)} fs-6`}>
               {getAvailabilityText(property.availability)}
             </span>
@@ -311,6 +488,37 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
             )}
           </div>
 
+          {/* Payment Button Section */}
+          <div className="mt-4 mb-3 p-4" style={{
+            background: 'linear-gradient(135deg, rgba(200,162,74,0.1) 0%, rgba(200,162,74,0.05) 100%)',
+            borderRadius: '16px',
+            border: '2px solid rgba(200,162,74,0.3)'
+          }}>
+            <div className="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+              <div>
+                <h5 className="mb-1" style={{ color: '#1E293B', fontWeight: '700' }}>
+                  {property.purpose === 'Rent' ? 'Ready to Rent?' : 'Ready to Own?'}
+                </h5>
+                <p className="mb-0" style={{ color: '#64748B', fontSize: '0.9rem' }}>
+                  {property.purpose === 'Rent'
+                    ? 'Pay the first month rent to start your rental'
+                    : 'Complete your purchase securely online'}
+                </p>
+              </div>
+              <PaymentButton
+                property={property}
+                paymentType={property.purpose === 'Rent' ? 'RENT' : 'BUY'}
+                onSuccess={(data) => {
+                  alert('Payment successful! Your ' + (property.purpose === 'Rent' ? 'rental' : 'purchase') + ' has been confirmed.');
+                  window.location.reload();
+                }}
+                onFailure={(error) => {
+                  console.error('Payment failed:', error);
+                }}
+              />
+            </div>
+          </div>
+
           <div className="d-flex justify-content-between mt-3">
             <button
               className="btn btn-outline-primary"
@@ -402,7 +610,7 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
                   <p><strong>Property Type:</strong> {property.type}</p>
                 </div>
                 <div className="col-md-6">
-                  <p><strong>Area:</strong> {property.area}</p>
+                  <p><strong>Area:</strong> {property.area} sq.ft</p>
                 </div>
                 <div className="col-md-6">
                   <p><strong>Possession:</strong> {property.possession}</p>
@@ -410,8 +618,22 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
                 <div className="col-md-6">
                   <p><strong>Construction Status:</strong> {property.construction_status || property.constructionStatus}</p>
                 </div>
+                {property.bedrooms && (
+                  <div className="col-md-6">
+                    <p><strong>Bedrooms:</strong> {property.bedrooms} BHK</p>
+                  </div>
+                )}
+                {property.bathrooms && (
+                  <div className="col-md-6">
+                    <p><strong>Bathrooms:</strong> {property.bathrooms}</p>
+                  </div>
+                )}
                 <div className="col-md-6">
                   <p><strong>Purpose:</strong> {property.purpose}</p>
+                </div>
+                <div className="col-12 mt-3">
+                  <h4>Description</h4>
+                  <p style={{ lineHeight: '1.6', color: 'var(--secondary-text)' }}>{property.description || 'No description available.'}</p>
                 </div>
               </div>
 
@@ -425,64 +647,62 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
               </div>
             </div>
 
-            {/* Map Section */}
-            {property.google_map_link && (
-              <div className="map-section mb-5 animate__animated animate__fadeInUp animate__delay-3s">
-                <h3>Location</h3>
-                <div className="map-container bg-light rounded" style={{ height: '300px', overflow: 'hidden' }}>
-                  <iframe
-                    src={property.google_map_link}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen=""
-                    loading="lazy"
-                    title="Property Location"
-                  ></iframe>
-                </div>
-              </div>
-            )}
-
-            {/* 360 View Section */}
-            {property.virtual_tour_link && (
-              <div className="view-section mb-5 animate__animated animate__fadeInUp animate__delay-4s">
-                <h3>360° Virtual Tour</h3>
-                <div className="street-view rounded" style={{ backgroundColor: '#F1F5F9' }}>
-                  <div className="text-center p-5">
-                    <i className="bi bi-camera fs-1 mb-3" style={{ color: '#94A3B8' }}></i>
-                    <p>Interactive 360° view of the property</p>
+            {/* Map Section - Using OpenStreetMap */}
+            <div className="map-section mb-5 animate__animated animate__fadeInUp animate__delay-3s">
+              <h3>
+                <i className="bi bi-geo-alt-fill me-2" style={{ color: 'var(--construction-gold)' }}></i>
+                Property Location
+              </h3>
+              {property.latitude && property.longitude ? (
+                <PropertyMap
+                  properties={[property]}
+                  center={{ lat: property.latitude, lng: property.longitude }}
+                  zoom={15}
+                  height="350px"
+                  showSingleProperty={true}
+                />
+              ) : (
+                <div className="text-center p-5" style={{
+                  background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+                  borderRadius: '16px',
+                  border: '2px solid var(--card-border)'
+                }}>
+                  <i className="bi bi-geo-alt" style={{ fontSize: '3rem', color: 'var(--secondary-text)' }}></i>
+                  <p className="mt-3" style={{ color: 'var(--secondary-text)' }}>
+                    📍 Location not available for this property.
+                  </p>
+                  {property.google_map_link && (
                     <a
-                      href={property.virtual_tour_link}
+                      href={property.google_map_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-primary"
+                      className="btn mt-2"
                       style={{
-                        borderRadius: '8px',
-                        fontWeight: '600',
-                        transition: 'all 0.3s ease',
-                        background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)',
-                        border: 'none',
-                        color: '#0B1220',
-                        display: 'inline-block',
-                        textDecoration: 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#9E7C2F';
-                        e.target.style.transform = 'translateY(-3px)';
-                        e.target.style.boxShadow = '0 6px 16px rgba(158, 124, 47, 0.4)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'linear-gradient(90deg, #C8A24A, #9E7C2F)';
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 4px 12px rgba(158, 124, 47, 0.3)';
+                        background: 'var(--construction-gold)',
+                        color: '#0F172A',
+                        border: 'none'
                       }}
                     >
-                      View Virtual Tour
+                      <i className="bi bi-box-arrow-up-right me-1"></i>
+                      Open Map Link
                     </a>
-                  </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* 360° Virtual Tour Section - Using Pannellum */}
+            <div className="view-section mb-5 animate__animated animate__fadeInUp animate__delay-4s">
+              <h3>
+                <i className="bi bi-badge-vr me-2" style={{ color: 'var(--construction-gold)' }}></i>
+                360° Virtual Tour
+              </h3>
+              <PanoramaViewer
+                imageUrl={property.virtual_tour_link || null}
+                title={`360° View - ${property.name}`}
+                height="450px"
+              />
+            </div>
           </div>
 
           {/* Action Panel */}
@@ -498,89 +718,141 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
                   <p className="card-text">Get in touch with our experts for more information.</p>
 
                   {property.purpose === 'Buy' ? (
-                    <button
-                      className="btn btn-primary w-100 mb-2"
-                      onClick={() => setShowEnquiryModal(true)}
-                      style={{
-                        borderRadius: '8px',
-                        fontWeight: '600',
-                        padding: '12px',
-                        transition: 'all 0.3s ease',
-                        background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)',
-                        border: 'none',
-                        color: '#0B1220'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#9E7C2F';
-                        e.target.style.transform = 'translateY(-3px)';
-                        e.target.style.boxShadow = '0 6px 16px rgba(158, 124, 47, 0.4)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'linear-gradient(90deg, #C8A24A, #9E7C2F)';
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 4px 12px rgba(158, 124, 47, 0.3)';
-                      }}
-                    >
-                      Send Buy Enquiry
-                    </button>
+                    <>
+                      <button
+                        className="btn btn-primary w-100 mb-2"
+                        onClick={() => toggleForm('enquiry')}
+                        style={{
+                          borderRadius: '8px',
+                          fontWeight: '600',
+                          padding: '12px',
+                          transition: 'all 0.3s ease',
+                          background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)',
+                          border: 'none',
+                          color: '#0B1220'
+                        }}
+                      >
+                        {showEnquiryForm ? 'Cancel Enquiry' : 'Send Buy Enquiry'}
+                      </button>
+                      <AnimatePresence>
+                        {showEnquiryForm && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            style={{ overflow: 'hidden' }}
+                          >
+                            <form onSubmit={handleEnquirySubmit} className="p-3 mb-3" style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--section-divider)' }}>
+                              {message.text && (
+                                <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'} py-2`}>
+                                  {message.text}
+                                </div>
+                              )}
+                              <input className="form-control mb-2" placeholder="Full Name" name="fullName" value={enquiryForm.fullName} onChange={handleEnquiryChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                              <input className="form-control mb-2" placeholder="Email" name="email" value={enquiryForm.email} onChange={handleEnquiryChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                              <input className="form-control mb-2" placeholder="Phone" name="phone" value={enquiryForm.phone} onChange={handleEnquiryChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                              <textarea className="form-control mb-2" placeholder="Message" name="message" value={enquiryForm.message} onChange={handleEnquiryChange} required rows="3" style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }}></textarea>
+                              <button type="submit" className="btn btn-primary w-100" style={{ background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)', border: 'none', color: '#0B1220' }} disabled={submitting}>Send Message</button>
+                            </form>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </>
                   ) : (
-                    <button
-                      className="btn btn-primary w-100 mb-2"
-                      onClick={() => setShowRentModal(true)}
-                      style={{
-                        borderRadius: '8px',
-                        fontWeight: '600',
-                        padding: '12px',
-                        transition: 'all 0.3s ease',
-                        background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)',
-                        border: 'none',
-                        color: '#0B1220'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#9E7C2F';
-                        e.target.style.transform = 'translateY(-3px)';
-                        e.target.style.boxShadow = '0 6px 16px rgba(158, 124, 47, 0.4)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'linear-gradient(90deg, #C8A24A, #9E7C2F)';
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 4px 12px rgba(158, 124, 47, 0.3)';
-                      }}
-                    >
-                      Request for Rent
-                    </button>
+                    <>
+                      <button
+                        className="btn btn-primary w-100 mb-2"
+                        onClick={() => toggleForm('rent')}
+                        style={{
+                          borderRadius: '8px',
+                          fontWeight: '600',
+                          padding: '12px',
+                          transition: 'all 0.3s ease',
+                          background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)',
+                          border: 'none',
+                          color: '#0B1220'
+                        }}
+                      >
+                        {showRentForm ? 'Cancel Request' : 'Request for Rent'}
+                      </button>
+                      <AnimatePresence>
+                        {showRentForm && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            style={{ overflow: 'hidden' }}
+                          >
+                            <form onSubmit={handleRentSubmit} className="p-3 mb-3" style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--section-divider)' }}>
+                              {message.text && (
+                                <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'} py-2`}>
+                                  {message.text}
+                                </div>
+                              )}
+                              <input className="form-control mb-2" placeholder="Full Name" name="fullName" value={rentForm.fullName} onChange={handleRentChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                              <input className="form-control mb-2" placeholder="Email" name="email" value={rentForm.email} onChange={handleRentChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                              <input className="form-control mb-2" placeholder="Phone" name="phone" value={rentForm.phone} onChange={handleRentChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                              <div className="mb-2">
+                                <small className="text-muted d-block mb-1">Move-in Date</small>
+                                <input type="date" className="form-control" name="moveInDate" value={rentForm.moveInDate} onChange={handleRentChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                              </div>
+                              <textarea className="form-control mb-2" placeholder="Message" name="message" value={rentForm.message} onChange={handleRentChange} required rows="3" style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }}></textarea>
+                              <button type="submit" className="btn btn-primary w-100" style={{ background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)', border: 'none', color: '#0B1220' }} disabled={submitting}>Submit Request</button>
+                            </form>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </>
                   )}
 
                   <button
-                    className="btn btn-outline-secondary w-100"
+                    className="btn btn-outline-primary w-100 mb-2"
+                    onClick={() => toggleForm('visit')}
                     style={{
                       borderRadius: '8px',
                       fontWeight: '600',
                       padding: '12px',
                       transition: 'all 0.3s ease',
-                      border: '1px solid #94A3B8',
-                      color: '#64748B',
+                      border: '2px solid #C8A24A',
+                      color: 'var(--primary-text)',
                       background: 'transparent'
                     }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = '#F1F5F9';
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 4px 12px rgba(148, 163, 184, 0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'transparent';
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = 'none';
-                    }}
                   >
-                    Schedule a Visit
+                    {showVisitForm ? 'Cancel Visit' : 'Schedule a Visit'}
                   </button>
+                  <AnimatePresence>
+                    {showVisitForm && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <form onSubmit={handleVisitSubmit} className="p-3 mb-3" style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--section-divider)' }}>
+                          {message.text && (
+                            <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'} py-2`}>
+                              {message.text}
+                            </div>
+                          )}
+                          <input className="form-control mb-2" placeholder="Full Name" name="fullName" value={visitForm.fullName} onChange={handleVisitChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                          <input className="form-control mb-2" placeholder="Email" name="email" value={visitForm.email} onChange={handleVisitChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                          <input className="form-control mb-2" placeholder="Phone" name="phone" value={visitForm.phone} onChange={handleVisitChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                          <div className="mb-2">
+                            <small className="text-muted d-block mb-1">Visit Date</small>
+                            <input type="date" className="form-control" name="visitDate" value={visitForm.visitDate} onChange={handleVisitChange} required style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }} />
+                          </div>
+                          <textarea className="form-control mb-2" placeholder="Message" name="message" value={visitForm.message} onChange={handleVisitChange} rows="3" style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }}></textarea>
+                          <button type="submit" className="btn btn-primary w-100" style={{ background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)', border: 'none', color: '#0B1220' }} disabled={submitting}>Confirm Visit</button>
+                        </form>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* EMI Calculator Button */}
                   {property.purpose === 'Buy' && (
                     <button
                       className="btn w-100 mt-2"
-                      onClick={() => setShowEMICalculator(true)}
+                      onClick={() => toggleForm('emi')}
                       style={{
                         borderRadius: '8px',
                         fontWeight: '600',
@@ -599,9 +871,23 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
                         e.target.style.boxShadow = 'none';
                       }}
                     >
-                      <i className="bi bi-calculator me-2"></i>Calculate EMI
+                      <i className="bi bi-calculator me-2"></i>{showEMICalculator ? 'Hide Calculator' : 'Calculate EMI'}
                     </button>
                   )}
+                  <AnimatePresence>
+                    {showEMICalculator && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div className="p-3 mb-3" style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--section-divider)', marginTop: '16px' }}>
+                          <EMICalculator propertyPrice={formatCurrency(property.price)} inline={true} />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Share Section */}
                   <div className="mt-4 pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
@@ -671,303 +957,9 @@ const PropertyDetail = ({ property, navigateTo, addToCompare, addToWishlist }) =
         </div>
       </div >
 
-      {/* EMI Calculator Modal */}
-      {
-        showEMICalculator && (
-          <EMICalculator
-            propertyPrice={property.price}
-            onClose={() => setShowEMICalculator(false)}
-          />
-        )
-      }
 
-      {/* Buy Enquiry Modal */}
-      {
-        showEnquiryModal && (
-          <div className="modal show d-block animate__animated animate__fadeIn" tabIndex="-1">
-            <div className="modal-dialog">
-              <div className="modal-content" style={{ borderRadius: '12px', background: 'var(--card-bg)', color: 'var(--primary-text)', border: '1px solid #E2E8F0' }}>
-                <div className="modal-header" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                  <h5 className="modal-title">Buy Enquiry for {property.name}</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setShowEnquiryModal(false)}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  <form onSubmit={handleEnquirySubmit}>
-                    {message.text && (
-                      <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'}`}>
-                        {message.text}
-                      </div>
-                    )}
-                    <div className="mb-3">
-                      <label className="form-label">Full Name</label>
-                      <input
-                        type="text"
-                        name="fullName"
-                        value={enquiryForm.fullName}
-                        onChange={handleEnquiryChange}
-                        required
-                        className="form-control"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={enquiryForm.email}
-                        onChange={handleEnquiryChange}
-                        required
-                        className="form-control"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Phone Number</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={enquiryForm.phone}
-                        onChange={handleEnquiryChange}
-                        required
-                        className="form-control"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Message</label>
-                      <textarea
-                        name="message"
-                        value={enquiryForm.message}
-                        onChange={handleEnquiryChange}
-                        required
-                        className="form-control"
-                        rows="3"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      ></textarea>
-                    </div>
-                    <div className="modal-footer border-0 p-0 mt-3">
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => setShowEnquiryModal(false)}
-                        style={{
-                          borderRadius: '8px',
-                          fontWeight: '600',
-                          border: '1px solid #94A3B8',
-                          color: '#64748B',
-                          background: 'transparent'
-                        }}
-                      >
-                        Close
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="btn btn-primary"
-                        style={{
-                          borderRadius: '8px',
-                          fontWeight: '600',
-                          background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)',
-                          border: 'none',
-                          color: '#0B1220'
-                        }}
-                      >
-                        {submitting ? 'Sending...' : 'Submit Enquiry'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
 
-              </div>
-            </div>
-          </div>
-        )
-      }
 
-      {/* Rent Request Modal */}
-      {
-        showRentModal && (
-          <div className="modal show d-block animate__animated animate__fadeIn" tabIndex="-1">
-            <div className="modal-dialog">
-              <div className="modal-content" style={{ borderRadius: '12px', background: 'var(--card-bg)', color: 'var(--primary-text)', border: '1px solid #E2E8F0' }}>
-                <div className="modal-header" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                  <h5 className="modal-title">Rent Request for {property.name}</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setShowRentModal(false)}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  <form onSubmit={handleRentSubmit}>
-                    {message.text && (
-                      <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'}`}>
-                        {message.text}
-                      </div>
-                    )}
-                    <div className="mb-3">
-                      <label className="form-label">Full Name</label>
-                      <input
-                        type="text"
-                        name="fullName"
-                        value={rentForm.fullName}
-                        onChange={handleRentChange}
-                        required
-                        className="form-control"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={rentForm.email}
-                        onChange={handleRentChange}
-                        required
-                        className="form-control"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Phone Number</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={rentForm.phone}
-                        onChange={handleRentChange}
-                        required
-                        className="form-control"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Move-in Date</label>
-                      <input
-                        type="date"
-                        name="moveInDate"
-                        value={rentForm.moveInDate}
-                        onChange={handleRentChange}
-                        required
-                        className="form-control"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Message</label>
-                      <textarea
-                        name="message"
-                        value={rentForm.message}
-                        onChange={handleRentChange}
-                        className="form-control"
-                        rows="3"
-                        style={{
-                          borderColor: '#CBD5E1',
-                          borderRadius: '8px',
-                          padding: '10px',
-                          color: 'var(--primary-text)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      ></textarea>
-                    </div>
-                    <div className="modal-footer border-0 p-0 mt-3">
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => setShowRentModal(false)}
-                        style={{
-                          borderRadius: '8px',
-                          fontWeight: '600',
-                          border: '1px solid #94A3B8',
-                          color: '#64748B',
-                          background: 'transparent'
-                        }}
-                      >
-                        Close
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="btn btn-primary"
-                        style={{
-                          borderRadius: '8px',
-                          fontWeight: '600',
-                          background: 'linear-gradient(90deg, #C8A24A, #9E7C2F)',
-                          border: 'none',
-                          color: '#0B1220'
-                        }}
-                      >
-                        {submitting ? 'Sending...' : 'Submit Request'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        )
-      }
-
-      {/* Modal backdrop */}
-      {
-        (showEnquiryModal || showRentModal) && (
-          <div className="modal-backdrop show"></div>
-        )
-      }
     </div >
   );
 };

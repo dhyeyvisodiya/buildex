@@ -5,6 +5,7 @@ import {
   updateBuilderStatus,
   getAllProperties,
   updatePropertyStatus,
+  deleteProperty,
   getAllComplaints,
   updateComplaintStatus
 } from '../../api/apiService';
@@ -96,14 +97,17 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleBlockProperty = async (id) => {
+  const handleDeleteProperty = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this property permanently? This action cannot be undone.')) {
+      return;
+    }
     try {
-      const result = await updatePropertyStatus(id, 'blocked');
+      const result = await deleteProperty(id);
       if (result.success) {
-        setProperties(prev => prev.map(p => p.id === id ? { ...p, status: 'blocked' } : p));
+        setProperties(prev => prev.filter(p => p.id !== id));
       }
     } catch (error) {
-      console.error('Error blocking property:', error);
+      console.error('Error deleting property:', error);
     }
   };
 
@@ -495,9 +499,9 @@ const AdminDashboard = () => {
                               <button
                                 className="btn btn-sm"
                                 style={{ background: '#EF4444', color: 'white', borderRadius: '6px' }}
-                                onClick={() => handleBlockProperty(property.id)}
+                                onClick={() => handleDeleteProperty(property.id)}
                               >
-                                Reject
+                                Delete
                               </button>
                             </>
                           )}
@@ -505,9 +509,9 @@ const AdminDashboard = () => {
                             <button
                               className="btn btn-sm"
                               style={{ background: '#EF4444', color: 'white', borderRadius: '6px' }}
-                              onClick={() => handleBlockProperty(property.id)}
+                              onClick={() => handleDeleteProperty(property.id)}
                             >
-                              Block
+                              Delete
                             </button>
                           )}
                         </td>

@@ -1,6 +1,16 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const PropertyCard = ({ property, navigateTo, addToCompare, addToWishlist }) => {
+const PropertyCard = ({ property, addToCompare, addToWishlist }) => {
+  const navigate = useNavigate();
+
+  const formatCurrency = (value) => {
+    if (!value) return '';
+    const valStr = value.toString().replace(/,/g, '').replace('₹', '').replace(/\s/g, '');
+    const num = parseFloat(valStr);
+    if (isNaN(num)) return value;
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num);
+  };
   const getAvailabilityClass = (availability) => {
     switch (availability) {
       case 'available': return 'badge-available';
@@ -38,15 +48,15 @@ const PropertyCard = ({ property, navigateTo, addToCompare, addToWishlist }) => 
             src={property.images[0]}
             className="property-image card-img-top"
             alt={property.name}
-            style={{ height: '200px', objectFit: 'cover' }}
+            style={{ height: '250px', objectFit: 'cover' }}
             onError={(e) => {
               e.target.onerror = null;
               e.target.style.display = 'none';
-              e.target.parentNode.innerHTML = '<div class="property-image bg-light d-flex align-items-center justify-content-center" style="height: 200px"><span class="text-muted">Image Error</span></div>';
+              e.target.parentNode.innerHTML = '<div class="property-image bg-light d-flex align-items-center justify-content-center" style="height: 250px"><span class="text-muted">Image Error</span></div>';
             }}
           />
         ) : (
-          <div className="property-image bg-light d-flex align-items-center justify-content-center" style={{ height: '200px' }}>
+          <div className="property-image bg-light d-flex align-items-center justify-content-center" style={{ height: '250px' }}>
             <span className="text-muted">No Image</span>
           </div>
         )}
@@ -62,7 +72,7 @@ const PropertyCard = ({ property, navigateTo, addToCompare, addToWishlist }) => 
         <div className="mt-auto">
           <div className="d-flex justify-content-between align-items-center mb-2">
             <span className="fw-bold fs-5">
-              {property.purpose === 'Buy' ? property.price : property.rent}
+              {property.purpose === 'Buy' ? formatCurrency(property.price) : `${formatCurrency(property.rent)}/mo`}
             </span>
             <span className="badge" style={{ backgroundColor: 'var(--construction-gold)', color: 'var(--primary-text)' }}>{property.type}</span>
           </div>
@@ -70,7 +80,7 @@ const PropertyCard = ({ property, navigateTo, addToCompare, addToWishlist }) => 
           <div className="d-flex justify-content-between mt-3">
             <button
               className="btn btn-primary"
-              onClick={() => navigateTo('property-detail', property)}
+              onClick={() => navigate(`/property/${property.id}`)}
               style={{
                 background: 'linear-gradient(90deg, var(--construction-gold), var(--deep-bronze))',
                 border: 'none',

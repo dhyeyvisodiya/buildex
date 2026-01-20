@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const Register = ({ onRegisterSuccess, navigateTo }) => {
+const Register = () => {
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,6 +17,13 @@ const Register = ({ onRegisterSuccess, navigateTo }) => {
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState('');
   const { register, verifyOtp } = useAuth();
+  const navigate = useNavigate();
+
+  const handleRegisterSuccess = (user) => {
+    if (user.role === 'admin') navigate('/admin-dashboard');
+    else if (user.role === 'builder') navigate('/builder-dashboard');
+    else navigate('/user-dashboard');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,7 +66,7 @@ const Register = ({ onRegisterSuccess, navigateTo }) => {
             setShowOtp(true);
             setLoading(false);
           } else {
-            onRegisterSuccess(result.user);
+            handleRegisterSuccess(result.user);
           }
         } else {
           setError(result.message);
@@ -68,7 +76,7 @@ const Register = ({ onRegisterSuccess, navigateTo }) => {
         // Step 2: Verify OTP
         const result = await verifyOtp(email, otp);
         if (result.success) {
-          onRegisterSuccess(result.user);
+          handleRegisterSuccess(result.user);
         } else {
           setError(result.message || 'Invalid OTP');
           setLoading(false);
@@ -445,7 +453,7 @@ const Register = ({ onRegisterSuccess, navigateTo }) => {
                 </p>
                 <button
                   type="button"
-                  onClick={() => navigateTo && navigateTo('login')}
+                  onClick={() => navigate('/login')}
                   className="btn w-100"
                   style={{
                     background: 'rgba(255,255,255,0.05)',

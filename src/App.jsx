@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import './App.css'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -17,17 +18,31 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
+// Protected Route Component
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { currentUser } = useAuth()
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
+    // Redirect to appropriate dashboard based on actual role
+    if (currentUser.role === 'admin') return <Navigate to="/admin-dashboard" replace />
+    if (currentUser.role === 'builder') return <Navigate to="/builder-dashboard" replace />
+    return <Navigate to="/user-dashboard" replace />
+  }
+
+  return children
+}
+
 function AppContent() {
-  const [currentPage, setCurrentPage] = useState('home')
-  const [selectedProperty, setSelectedProperty] = useState(null)
   const [compareList, setCompareList] = useState([])
   const [wishlist, setWishlist] = useState([])
-  const { currentUser, logout } = useAuth()
+  const location = useLocation()
 
-  const navigateTo = (page, property = null) => {
-    setCurrentPage(page)
-    if (property) setSelectedProperty(property)
-  }
+  // Helper for components that might still try to call navigateTo (backward compat or easy refactor)
+  const navigate = useNavigate()
 
   const addToCompare = (property) => {
     if (compareList.length < 3 && !compareList.find(p => p.id === property.id)) {
@@ -49,106 +64,50 @@ function AppContent() {
     setWishlist(wishlist.filter(p => p.id !== propertyId))
   }
 
-  const handleLoginSuccess = (user) => {
-    // Navigate to appropriate dashboard based on user role
-    if (user.role === 'admin') {
-      navigateTo('admin-dashboard')
-    } else if (user.role === 'builder') {
-      navigateTo('builder-dashboard')
-    } else {
-      navigateTo('user-dashboard')
-    }
-  }
-
-  const handleRegisterSuccess = (user) => {
-    // Navigate to appropriate dashboard based on user role
-    if (user.role === 'admin') {
-      navigateTo('admin-dashboard')
-    } else if (user.role === 'builder') {
-      navigateTo('builder-dashboard')
-    } else {
-      navigateTo('user-dashboard')
-    }
-  }
-
-  const handleLogout = () => {
-    logout()
-    navigateTo('home')
-  }
-
-  // If user is not logged in and trying to access protected pages, redirect to login
-  if (!currentUser && (currentPage === 'user-dashboard' || currentPage === 'builder-dashboard' || currentPage === 'admin-dashboard')) {
-    setCurrentPage('login')
-  }
-
-  const renderPage = () => {
-    // Handle authentication pages
-    if (currentPage === 'login') {
-      return <Login onLoginSuccess={handleLoginSuccess} navigateTo={navigateTo} />
-    }
-
-    if (currentPage === 'register') {
-      return <Register onRegisterSuccess={handleRegisterSuccess} navigateTo={navigateTo} />
-    }
-
-    if (currentPage === 'forgot-password') {
-      return <ForgotPassword navigateTo={navigateTo} />
-    }
-
-    // If user is not logged in, show login page for protected routes
-    if (!currentUser && (currentPage === 'user-dashboard' || currentPage === 'builder-dashboard' || currentPage === 'admin-dashboard')) {
-      return <Login onLoginSuccess={handleLoginSuccess} />
-    }
-
-    // Show appropriate dashboard based on user role
-    if (currentPage === 'user-dashboard' && currentUser?.role !== 'user' && currentUser?.role !== 'admin') {
-      return <Login onLoginSuccess={handleLoginSuccess} />
-    }
-
-    if (currentPage === 'builder-dashboard' && currentUser?.role !== 'builder' && currentUser?.role !== 'admin') {
-      return <Login onLoginSuccess={handleLoginSuccess} />
-    }
-
-    if (currentPage === 'admin-dashboard' && currentUser?.role !== 'admin') {
-      return <Login onLoginSuccess={handleLoginSuccess} />
-    }
-
-    switch (currentPage) {
-      case 'home':
-        return <Home navigateTo={navigateTo} />
-      case 'property-list':
-        return <PropertyList navigateTo={navigateTo} addToCompare={addToCompare} addToWishlist={addToWishlist} />
-      case 'property-detail':
-        return <PropertyDetail property={selectedProperty} navigateTo={navigateTo} addToCompare={addToCompare} addToWishlist={addToWishlist} />
-      case 'compare':
-        return <CompareProperties compareList={compareList} removeFromCompare={removeFromCompare} navigateTo={navigateTo} />
-      case 'wishlist':
-        return <Wishlist wishlist={wishlist} removeFromWishlist={removeFromWishlist} navigateTo={navigateTo} />
-      case 'user-dashboard':
-        return <UserDashboard wishlist={wishlist} navigateTo={navigateTo} />
-      case 'builder-dashboard':
-        return <BuilderDashboard />
-      case 'admin-dashboard':
-        return <AdminDashboard />
-      default:
-        return <Home navigateTo={navigateTo} />
-    }
-  }
-
   return (
     <div className="App" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header
-        currentPage={currentPage}
-        navigateTo={navigateTo}
+        currentPage={location.pathname}
         compareCount={compareList.length}
         wishlistCount={wishlist.length}
-        currentUser={currentUser}
-        onLogout={handleLogout}
       />
       <main style={{ flex: '1' }}>
-        {renderPage()}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/property-list" element={<PropertyList addToCompare={addToCompare} addToWishlist={addToWishlist} />} />
+          <Route path="/properties" element={<PropertyList addToCompare={addToCompare} addToWishlist={addToWishlist} />} />
+          <Route path="/property/:id" element={<PropertyDetail addToCompare={addToCompare} addToWishlist={addToWishlist} />} />
+
+          <Route path="/compare" element={<CompareProperties compareList={compareList} removeFromCompare={removeFromCompare} />} />
+          <Route path="/wishlist" element={<Wishlist wishlist={wishlist} removeFromWishlist={removeFromWishlist} />} />
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          {/* Protected Routes */}
+          <Route path="/user-dashboard" element={
+            <ProtectedRoute allowedRoles={['user', 'admin']}>
+              <UserDashboard wishlist={wishlist} />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/builder-dashboard" element={
+            <ProtectedRoute allowedRoles={['builder', 'admin']}>
+              <BuilderDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="*" element={<Home />} />
+        </Routes>
       </main>
-      <Footer navigateTo={navigateTo} />
+      <Footer />
       <BackToTop />
     </div>
   )
@@ -158,7 +117,9 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <AppContent />
+        <Router>
+          <AppContent />
+        </Router>
       </AuthProvider>
     </ErrorBoundary>
   )

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import PropertyCard from '../components/PropertyCard';
 import {
@@ -8,7 +9,8 @@ import {
   getUserRentHistory
 } from '../../api/apiService';
 
-const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist: propsRemoveFromWishlist }) => {
+const UserDashboard = ({ wishlist: propsWishlist, removeFromWishlist: propsRemoveFromWishlist }) => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -183,7 +185,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
             {/* Stats Cards */}
             <div className="col-md-4">
               <div style={{
-                background: '#0F1E33',
+                background: 'var(--card-bg)',
                 borderRadius: '16px',
                 padding: '24px',
                 border: '1px solid #E2E8F0',
@@ -211,7 +213,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
 
             <div className="col-md-4">
               <div style={{
-                background: '#0F1E33',
+                background: 'var(--card-bg)',
                 borderRadius: '16px',
                 padding: '24px',
                 border: '1px solid #E2E8F0',
@@ -239,7 +241,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
 
             <div className="col-md-4">
               <div style={{
-                background: '#0F1E33',
+                background: 'var(--card-bg)',
                 borderRadius: '16px',
                 padding: '24px',
                 border: '1px solid #E2E8F0',
@@ -277,7 +279,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
                 <h5 className="fw-bold mb-4" style={{ color: 'var(--primary-text)' }}>Quick Actions</h5>
                 <div className="d-flex gap-3 flex-wrap">
                   <button
-                    onClick={() => navigateTo('property-list')}
+                    onClick={() => navigate('/property-list')}
                     className="btn"
                     style={{
                       background: 'var(--construction-gold)',
@@ -291,7 +293,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
                     <i className="bi bi-search me-2"></i>Browse Properties
                   </button>
                   <button
-                    onClick={() => navigateTo('compare')}
+                    onClick={() => navigate('/compare-properties')}
                     className="btn"
                     style={{
                       background: '#0F1E33',
@@ -351,7 +353,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
                       Start browsing properties to see your activity here
                     </p>
                     <button
-                      onClick={() => navigateTo('property-list')}
+                      onClick={() => navigate('/property-list')}
                       className="btn mt-2"
                       style={{
                         background: 'var(--construction-gold)',
@@ -371,7 +373,6 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
                       <div className="col-md-4" key={property.id}>
                         <PropertyCard
                           property={property}
-                          navigateTo={navigateTo}
                           addToCompare={() => { }}
                           addToWishlist={() => { }}
                         />
@@ -387,7 +388,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
         {/* Wishlist Tab */}
         {!loading && activeTab === 'wishlist' && (
           <div style={{
-            background: '#0F1E33',
+            background: 'var(--card-bg)',
             borderRadius: '16px',
             padding: '24px',
             border: '1px solid #E2E8F0'
@@ -418,7 +419,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
                   Save properties you like by clicking the heart icon to view them later
                 </p>
                 <button
-                  onClick={() => navigateTo('property-list')}
+                  onClick={() => navigate('/property-list')}
                   className="btn mt-3"
                   style={{
                     background: 'var(--construction-gold)',
@@ -439,7 +440,6 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
                     <div className="position-relative">
                       <PropertyCard
                         property={property}
-                        navigateTo={navigateTo}
                         addToCompare={() => { }}
                         addToWishlist={() => { }}
                       />
@@ -471,7 +471,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
         {/* Enquiries Tab */}
         {!loading && activeTab === 'enquiries' && (
           <div style={{
-            background: '#0F1E33',
+            background: 'var(--card-bg)',
             borderRadius: '16px',
             padding: '24px',
             border: '1px solid #E2E8F0'
@@ -541,7 +541,7 @@ const UserDashboard = ({ wishlist: propsWishlist, navigateTo, removeFromWishlist
         {/* Rent History Tab */}
         {!loading && activeTab === 'rentals' && (
           <div style={{
-            background: '#0F1E33',
+            background: 'var(--card-bg)',
             borderRadius: '16px',
             padding: '24px',
             border: '1px solid #E2E8F0'

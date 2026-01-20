@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const Login = ({ onLoginSuccess, navigateTo }) => {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLoginSuccess = (user) => {
+    // Check if there's a return URL in the location state
+    if (location.state?.returnUrl) {
+      navigate(location.state.returnUrl);
+      return;
+    }
+
+    if (user.role === 'admin') navigate('/admin-dashboard');
+    else if (user.role === 'builder') navigate('/builder-dashboard');
+    else navigate('/user-dashboard');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,7 +49,7 @@ const Login = ({ onLoginSuccess, navigateTo }) => {
     try {
       const result = await login(email, password);
       if (result.success) {
-        onLoginSuccess(result.user);
+        handleLoginSuccess(result.user);
       } else {
         setError(result.message);
       }
@@ -213,7 +228,7 @@ const Login = ({ onLoginSuccess, navigateTo }) => {
                 <div className="text-end mb-4">
                   <button
                     type="button"
-                    onClick={() => navigateTo && navigateTo('forgot-password')}
+                    onClick={() => navigate('/forgot-password')}
                     style={{
                       background: 'transparent',
                       border: 'none',
@@ -281,7 +296,7 @@ const Login = ({ onLoginSuccess, navigateTo }) => {
                 </p>
                 <button
                   type="button"
-                  onClick={() => navigateTo && navigateTo('register')}
+                  onClick={() => navigate('/register')}
                   className="btn w-100"
                   style={{
                     background: 'rgba(255,255,255,0.05)',

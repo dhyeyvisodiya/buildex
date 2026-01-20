@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Home = ({ navigateTo }) => {
+const Home = () => {
+  const navigate = useNavigate();
   // Animated counter hook
   const useCounter = (end, duration = 2000) => {
     const [count, setCount] = useState(0);
@@ -80,7 +82,7 @@ const Home = ({ navigateTo }) => {
               <div className="d-flex gap-3 animate__animated animate__fadeInUp animate__delay-3s">
                 <button
                   className="btn btn-primary px-4 py-3"
-                  onClick={() => navigateTo('property-list', { purpose: 'Buy' })}
+                  onClick={() => navigate('/property-list', { state: { purpose: 'Buy' } })}
                   style={{
                     background: 'linear-gradient(90deg, var(--construction-gold), var(--deep-bronze))',
                     border: 'none',
@@ -103,7 +105,7 @@ const Home = ({ navigateTo }) => {
                 </button>
                 <button
                   className="btn px-4 py-3"
-                  onClick={() => navigateTo('property-list', { purpose: 'Rent' })}
+                  onClick={() => navigate('/property-list', { state: { purpose: 'Rent' } })}
                   style={{
                     border: '2px solid var(--construction-gold)',
                     color: 'var(--construction-gold)',

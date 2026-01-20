@@ -20,9 +20,6 @@ const normalizeImages = (images) => {
             for (let i = 0; i < content.length; i++) {
                 const char = content[i];
                 if (char === '"') {
-                    // Check if escaped quote (not standard Postgres text[] but good to be safe)
-                    // Postgres typically escapes double quotes by doubling them in CSV output, but strict array output might vary.
-                    // We'll toggle flag.
                     inQuotes = !inQuotes;
                 } else if (char === ',' && !inQuotes) {
                     result.push(current);
@@ -44,20 +41,9 @@ const normalizeImages = (images) => {
             });
         }
 
-        // Fallback for old CSV format matches: url1,url2 (no braces)
-        // But be careful not to split Data URLs incorrectly if they don't have braces
-        // Data URL format: data:image/png;base64,...
-        // If the string starts with 'data:', treat as single image if no clear separator?
-        // But old code forced comma sep.
         if (images.includes(',')) {
-            // If it contains "data:", splitting by comma is risky unless we know it's CSV of URLs.
-            // If it's a single long base64 string, it likely has a comma in the header.
             if (images.trim().startsWith('data:')) {
-                // Check if it looks like multiple base64 strings?
-                // "data:...,data:..."
                 if (images.indexOf('data:', 5) > -1) {
-                    // Multiple data urls joined by comma?
-                    // Attempt to split only on ",data:"
                     return images.split(/,(?=data:)/).map(i => i.trim());
                 }
                 return [images]; // Single data URL
@@ -75,10 +61,10 @@ const normalizeImages = (images) => {
 export async function getProperties(filters = {}) {
     try {
         let query = sql`
-      SELECT p.*, u.full_name as builder_name, u.email as builder_email
+      SELECT p.*, p.title as name, p.property_type as type, p.rent_amount as rent, p.area_sqft as area, p.area as locality, p.possession_year as possession, p.availability_status as availability, u.full_name as builder_name, u.email as builder_email
       FROM properties p
       LEFT JOIN users u ON p.builder_id = u.id
-      WHERE p.status = 'approved'
+      ORDER BY p.created_at DESC
     `;
 
         const results = await query;
@@ -87,7 +73,7 @@ export async function getProperties(filters = {}) {
         let filtered = results;
 
         if (filters.type) {
-            filtered = filtered.filter(p => p.type === filters.type);
+            filtered = filtered.filter(p => p.property_type === filters.type);
         }
         if (filters.purpose) {
             filtered = filtered.filter(p => p.purpose === filters.purpose);
@@ -96,6 +82,7 @@ export async function getProperties(filters = {}) {
             filtered = filtered.filter(p => p.city === filters.city);
         }
         if (filters.locality) {
+            // Mapping check: Java schema uses 'area' for locality, Node used 'locality'
             filtered = filtered.filter(p => p.locality === filters.locality);
         }
 
@@ -112,11 +99,33 @@ export async function getProperties(filters = {}) {
     }
 }
 
+// Get property by ID
+export async function getPropertyById(id) {
+    try {
+        const results = await sql`
+            SELECT p.*, p.title as name, p.property_type as type, p.rent_amount as rent, p.area_sqft as area, p.area as locality, p.possession_year as possession, p.availability_status as availability, u.full_name as builder_name, u.email as builder_email
+            FROM properties p
+            LEFT JOIN users u ON p.builder_id = u.id
+            WHERE p.id = ${id}
+        `;
+        if (results.length === 0) return { success: false, error: 'Property not found' };
+
+        const property = {
+            ...results[0],
+            images: normalizeImages(results[0].images)
+        };
+        return { success: true, data: property };
+    } catch (error) {
+        console.error('Error fetching property:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 // Get properties by builder
 export async function getPropertiesByBuilder(builderId) {
     try {
         const results = await sql`
-      SELECT * FROM properties 
+      SELECT *, title as name, property_type as type, rent_amount as rent, area_sqft as area, area as locality, possession_year as possession, availability_status as availability FROM properties 
       WHERE builder_id = ${builderId}
       ORDER BY created_at DESC
     `;
@@ -133,35 +142,84 @@ export async function getPropertiesByBuilder(builderId) {
     }
 }
 
+// Helper function to calculate distance using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in kilometers
+}
+
+// Get nearby properties based on user location
+export async function getNearbyProperties(lat, lng, radiusKm = 10) {
+    try {
+        const results = await sql`
+            SELECT p.*, p.title as name, p.property_type as type, p.rent_amount as rent, 
+                   p.area_sqft as area, p.area as locality, p.possession_year as possession, 
+                   p.availability_status as availability, u.full_name as builder_name, u.email as builder_email
+            FROM properties p
+            LEFT JOIN users u ON p.builder_id = u.id
+            WHERE p.latitude IS NOT NULL AND p.longitude IS NOT NULL
+            ORDER BY p.created_at DESC
+        `;
+
+        // Filter by distance and add distance property
+        const nearbyProperties = results
+            .map(p => ({
+                ...p,
+                images: normalizeImages(p.images),
+                distance: calculateDistance(lat, lng, p.latitude, p.longitude)
+            }))
+            .filter(p => p.distance <= radiusKm)
+            .sort((a, b) => a.distance - b.distance);
+
+        return { success: true, data: nearbyProperties };
+    } catch (error) {
+        console.error('Error fetching nearby properties:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 // Create a new property
 export async function createProperty(propertyData) {
     try {
         const {
             builderId, name, type, purpose, price, rent, area,
-            city, locality, possession, constructionStatus, description,
+            city, locality, latitude, longitude, mapLink, possession, constructionStatus, description,
             bedrooms, bathrooms, amenities, images, availability,
             brochureUrl, googleMapLink, virtualTourLink
         } = propertyData;
 
+        // Process amenities - convert comma-separated string to array
+        const amenitiesArray = amenities
+            ? (typeof amenities === 'string' ? amenities.split(',').map(a => a.trim()) : amenities)
+            : [];
+
+        // Process images - ensure it's an array
+        const imagesArray = Array.isArray(images) ? images : (images ? [images] : []);
+
         const result = await sql`
       INSERT INTO properties (
-        builder_id, name, type, purpose, price, rent, area,
-        city, locality, possession, construction_status, description,
-        bedrooms, bathrooms, amenities, images, availability, status,
+        builder_id, title, property_type, purpose, price, rent_amount, area_sqft,
+        city, area, latitude, longitude, map_link, possession_year, construction_status, description,
+        bedrooms, bathrooms, amenities, images,
+        availability_status,
         brochure_url, google_map_link, virtual_tour_link
       )
       VALUES (
         ${builderId}, ${name}, ${type}, ${purpose}, ${price || null}, ${rent || null},
-        ${area || null}, ${city || null}, ${locality || null}, ${possession || null}, 
+        ${area || null}, ${city || null}, ${locality || null}, ${latitude || null}, ${longitude || null}, ${mapLink || null}, ${possession || null}, 
         ${constructionStatus || null}, ${description || null},
-        ${bedrooms || null}, ${bathrooms || null},
-        ${amenities ? amenities.split(',').map(a => a.trim()) : []},
-        ${Array.isArray(images) ? images : (images ? (images.startsWith('data:') ? [images] : images.split(',').map(i => i.trim())) : [])},
-        ${availability || 'available'},
-        'pending',
+        ${bedrooms || null}, ${bathrooms || null}, ${amenitiesArray}, ${imagesArray},
+        ${availability || 'AVAILABLE'},
         ${brochureUrl || null}, ${googleMapLink || null}, ${virtualTourLink || null}
       )
-      RETURNING *
+      RETURNING *, title as name, property_type as type, rent_amount as rent, area_sqft as area, area as locality, possession_year as possession, availability_status as availability
     `;
         return { success: true, data: result[0] };
     } catch (error) {
@@ -173,31 +231,44 @@ export async function createProperty(propertyData) {
 // Update property
 export async function updateProperty(propertyId, updates) {
     try {
+        // Process amenities - convert comma-separated string to array if needed
+        const amenitiesArray = updates.amenities
+            ? (typeof updates.amenities === 'string' ? updates.amenities.split(',').map(a => a.trim()) : updates.amenities)
+            : null;
+
+        // Process images - ensure it's an array if provided
+        const imagesArray = updates.images
+            ? (Array.isArray(updates.images) ? updates.images : [updates.images])
+            : null;
+
         const result = await sql`
       UPDATE properties
       SET 
-        name = COALESCE(${updates.name || null}, name),
-        type = COALESCE(${updates.type || null}, type),
+        title = COALESCE(${updates.name || null}, title),
+        property_type = COALESCE(${updates.type || null}, property_type),
         purpose = COALESCE(${updates.purpose || null}, purpose),
         price = COALESCE(${updates.price || null}, price),
-        rent = COALESCE(${updates.rent || null}, rent),
-        area = COALESCE(${updates.area || null}, area),
+        rent_amount = COALESCE(${updates.rent || null}, rent_amount),
+        area_sqft = COALESCE(${updates.area || null}, area_sqft),
         city = COALESCE(${updates.city || null}, city),
-        locality = COALESCE(${updates.locality || null}, locality),
-        possession = COALESCE(${updates.possession || null}, possession),
+        area = COALESCE(${updates.locality || null}, area),
+        possession_year = COALESCE(${updates.possession || null}, possession_year),
         construction_status = COALESCE(${updates.constructionStatus || null}, construction_status),
         description = COALESCE(${updates.description || null}, description),
         bedrooms = COALESCE(${updates.bedrooms || null}, bedrooms),
         bathrooms = COALESCE(${updates.bathrooms || null}, bathrooms),
-        availability = COALESCE(${updates.availability || null}, availability),
-        amenities = COALESCE(${updates.amenities ? updates.amenities.split(',').map(a => a.trim()) : null}, amenities),
-        images = COALESCE(${updates.images ? (Array.isArray(updates.images) ? updates.images : (updates.images.startsWith('data:') ? [updates.images] : updates.images.split(',').map(i => i.trim()))) : null}, images),
+        amenities = COALESCE(${amenitiesArray}, amenities),
+        images = COALESCE(${imagesArray}, images),
+        availability_status = COALESCE(${updates.availability || null}, availability_status),
+        latitude = COALESCE(${updates.latitude || null}, latitude),
+        longitude = COALESCE(${updates.longitude || null}, longitude),
+        map_link = COALESCE(${updates.mapLink || null}, map_link),
         brochure_url = COALESCE(${updates.brochureUrl || null}, brochure_url),
         google_map_link = COALESCE(${updates.googleMapLink || null}, google_map_link),
         virtual_tour_link = COALESCE(${updates.virtualTourLink || null}, virtual_tour_link),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${propertyId}
-      RETURNING *
+      RETURNING *, title as name, property_type as type, rent_amount as rent, area_sqft as area, area as locality, possession_year as possession, availability_status as availability
     `;
         return { success: true, data: result[0] };
     } catch (error) {
@@ -223,7 +294,7 @@ export async function deleteProperty(propertyId) {
 export async function getUserEnquiries(userId) {
     try {
         const results = await sql`
-      SELECT e.*, p.name as property_name, p.city, p.locality
+      SELECT e.*, p.title as property_name, p.city, p.area as locality
       FROM enquiries e
       JOIN properties p ON e.property_id = p.id
       WHERE e.user_id = ${userId}
@@ -240,7 +311,7 @@ export async function getUserEnquiries(userId) {
 export async function getBuilderEnquiries(builderId) {
     try {
         const results = await sql`
-      SELECT e.*, p.name as property_name, u.full_name as customer_name, u.email as customer_email
+      SELECT e.*, p.title as property_name, u.full_name as customer_name, u.email as customer_email
       FROM enquiries e
       JOIN properties p ON e.property_id = p.id
       LEFT JOIN users u ON e.user_id = u.id
@@ -291,7 +362,6 @@ export async function updateEnquiryStatus(enquiryId, status) {
 export async function createRentRequest(requestData) {
     try {
         const { propertyId, userId, builderId, moveInDate, message } = requestData;
-        // Connect intent: we should probably store the message too if we had a column, but for now just create the request
         const result = await sql`
       INSERT INTO rent_requests (property_id, user_id, builder_id, move_in_date, status)
       VALUES (${propertyId}, ${userId || null}, ${builderId}, ${moveInDate}, 'pending')
@@ -309,7 +379,7 @@ export async function createRentRequest(requestData) {
 export async function getRentRequestsByBuilder(builderId) {
     try {
         const results = await sql`
-      SELECT r.*, p.name as property_name, u.full_name as customer_name
+      SELECT r.*, p.title as property_name, u.full_name as customer_name
       FROM rent_requests r
       JOIN properties p ON r.property_id = p.id
       LEFT JOIN users u ON r.user_id = u.id
@@ -377,7 +447,7 @@ export async function updateBuilderStatus(builderId, status) {
 export async function getAllProperties() {
     try {
         const results = await sql`
-      SELECT p.*, u.full_name as builder_name
+      SELECT p.title as name, p.*, u.full_name as builder_name
       FROM properties p
       LEFT JOIN users u ON p.builder_id = u.id
       ORDER BY p.created_at DESC
@@ -400,7 +470,7 @@ export async function updatePropertyStatus(propertyId, status) {
       UPDATE properties
       SET status = ${status}, updated_at = CURRENT_TIMESTAMP
       WHERE id = ${propertyId}
-      RETURNING *
+      RETURNING *, title as name
     `;
         return { success: true, data: result[0] };
     } catch (error) {
@@ -413,7 +483,7 @@ export async function updatePropertyStatus(propertyId, status) {
 export async function getAllComplaints() {
     try {
         const results = await sql`
-      SELECT c.*, p.name as property_name, u.full_name as complainant_name
+      SELECT c.*, p.title as property_name, u.full_name as complainant_name
       FROM complaints c
       LEFT JOIN properties p ON c.property_id = p.id
       LEFT JOIN users u ON c.user_id = u.id
@@ -447,7 +517,7 @@ export async function updateComplaintStatus(complaintId, status) {
 export async function getUserWishlist(userId) {
     try {
         const results = await sql`
-      SELECT p.* FROM wishlist w
+      SELECT p.*, p.title as name FROM wishlist w
       JOIN properties p ON w.property_id = p.id
       WHERE w.user_id = ${userId}
       ORDER BY w.created_at DESC
@@ -480,7 +550,7 @@ export async function addToWishlist(userId, propertyId) {
 
 export async function removeFromWishlist(userId, propertyId) {
     try {
-        await sql`
+        const result = await sql`
       DELETE FROM wishlist
       WHERE user_id = ${userId} AND property_id = ${propertyId}
     `;
@@ -496,7 +566,7 @@ export async function removeFromWishlist(userId, propertyId) {
 export async function getUserRentHistory(userId) {
     try {
         const results = await sql`
-      SELECT r.*, p.name as property_name
+      SELECT r.*, p.title as property_name
       FROM rent_requests r
       JOIN properties p ON r.property_id = p.id
       WHERE r.user_id = ${userId}
@@ -505,6 +575,54 @@ export async function getUserRentHistory(userId) {
         return { success: true, data: results };
     } catch (error) {
         console.error('Error fetching rent history:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// ============== PAYMENT OPERATIONS ==============
+// Payment operations are handled via API routes (server-side only)
+// Frontend should call /api/payments/* endpoints directly
+
+/**
+ * Frontend-safe payment helper - Get user payments via API
+ */
+export async function fetchUserPayments(userId) {
+    try {
+        const result = await sql`
+            SELECT p.*, 
+                   pr.title as property_name, pr.city, pr.images,
+                   u.full_name as builder_name
+            FROM payments p
+            LEFT JOIN properties pr ON p.property_id = pr.id
+            LEFT JOIN users u ON p.builder_id = u.id
+            WHERE p.user_id = ${userId}
+            ORDER BY p.created_at DESC
+        `;
+        return { success: true, data: result };
+    } catch (error) {
+        console.error('Get user payments error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Frontend-safe rent subscriptions fetch
+ */
+export async function fetchUserRentSubscriptions(userId) {
+    try {
+        const result = await sql`
+            SELECT rs.*, 
+                   p.title as property_name, p.city, p.area, p.images,
+                   u.full_name as builder_name, u.phone as builder_phone
+            FROM rent_subscriptions rs
+            LEFT JOIN properties p ON rs.property_id = p.id
+            LEFT JOIN users u ON rs.builder_id = u.id
+            WHERE rs.user_id = ${userId}
+            ORDER BY rs.is_active DESC, rs.next_payment_due ASC
+        `;
+        return { success: true, data: result };
+    } catch (error) {
+        console.error('Get user rent subscriptions error:', error);
         return { success: false, error: error.message };
     }
 }

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import MapLocationPicker from '../components/MapLocationPicker';
 import {
   getPropertiesByBuilder,
   createProperty,
@@ -28,6 +30,9 @@ const BuilderDashboard = () => {
     area: '',
     city: '',
     locality: '',
+    latitude: '',
+    longitude: '',
+    mapLink: '',
     possession: '',
     constructionStatus: '',
     description: '',
@@ -106,8 +111,9 @@ const BuilderDashboard = () => {
   const handleSubmitProperty = async (e) => {
     e.preventDefault();
 
-    // Validation
-    const requiredFields = ['name', 'type', 'purpose', 'price'];
+    // Validation - check price for Buy, rent for Rent
+    const priceField = propertyForm.purpose === 'Rent' ? 'rent' : 'price';
+    const requiredFields = ['name', 'type', 'purpose', priceField];
     const missingField = requiredFields.find(field => !propertyForm[field]);
 
     if (missingField) {
@@ -169,6 +175,9 @@ const BuilderDashboard = () => {
       area: '',
       city: '',
       locality: '',
+      latitude: '',
+      longitude: '',
+      mapLink: '',
       possession: '',
       constructionStatus: '',
       description: '',
@@ -195,6 +204,9 @@ const BuilderDashboard = () => {
       area: property.area || '',
       city: property.city || '',
       locality: property.locality || '',
+      latitude: property.latitude || '',
+      longitude: property.longitude || '',
+      mapLink: property.map_link || '',
       possession: property.possession || '',
       constructionStatus: property.construction_status || '',
       description: property.description || '',
@@ -291,6 +303,19 @@ const BuilderDashboard = () => {
       day: 'numeric'
     });
   };
+
+  const inputStyle = {
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '10px',
+    padding: '12px 16px',
+    color: 'white',
+    transition: 'all 0.3s ease'
+  };
+
+  const isResidential = ['Apartment', 'Villa', 'House', 'Guest House', 'Farmhouse'].includes(propertyForm.type);
+  const isCommercial = ['Commercial', 'Office', 'Industrial', 'Warehouse'].includes(propertyForm.type);
+  const isLand = ['Plot', 'Agricultural Land'].includes(propertyForm.type);
 
   return (
     <div className="builder-dashboard-page" style={{ minHeight: '100vh', background: 'var(--off-white)' }}>
@@ -505,7 +530,7 @@ const BuilderDashboard = () => {
                     onChange={handleInputChange}
                     className="form-control"
                     placeholder="Enter property name"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
+                    style={inputStyle}
                   />
                 </div>
 
@@ -517,276 +542,399 @@ const BuilderDashboard = () => {
                     value={propertyForm.type}
                     onChange={handleInputChange}
                     className="form-select"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
+                    style={inputStyle}
                   >
-                    <option value="">Select Type</option>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Villa">Villa</option>
-                    <option value="House">House</option>
-                    <option value="Plot">Plot</option>
-                    <option value="Commercial">Commercial</option>
-                    <option value="Office">Office Space</option>
-                    <option value="Farmhouse">Farmhouse</option>
-                    <option value="Guest House">Guest House</option>
-                    <option value="Industrial">Industrial</option>
-                    <option value="Warehouse">Warehouse</option>
+                    <option value="" style={{ color: 'black' }}>Select Type</option>
+                    <option value="Apartment" style={{ color: 'black' }}>Apartment</option>
+                    <option value="Villa" style={{ color: 'black' }}>Villa</option>
+                    <option value="House" style={{ color: 'black' }}>House</option>
+                    <option value="Plot" style={{ color: 'black' }}>Plot</option>
+                    <option value="Commercial" style={{ color: 'black' }}>Commercial</option>
+                    <option value="Office" style={{ color: 'black' }}>Office Space</option>
+                    <option value="Farmhouse" style={{ color: 'black' }}>Farmhouse</option>
+                    <option value="Guest House" style={{ color: 'black' }}>Guest House</option>
+                    <option value="Industrial" style={{ color: 'black' }}>Industrial</option>
+                    <option value="Warehouse" style={{ color: 'black' }}>Warehouse</option>
                   </select>
                 </div>
 
+                <AnimatePresence>
+                  {propertyForm.type && (
+                    <motion.div
+                      className="col-12 row g-4 m-0 p-0"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
 
-                {/* Purpose */}
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Purpose *</label>
-                  <select
-                    name="purpose"
-                    value={propertyForm.purpose}
-                    onChange={handleInputChange}
-                    className="form-select"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  >
-                    <option value="">Select Purpose</option>
-                    <option value="Buy">For Sale</option>
-                    <option value="Rent">For Rent</option>
-                  </select>
-                </div>
 
-                {/* Price */}
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>
-                    {propertyForm.purpose === 'Rent' ? 'Monthly Rent *' : 'Price *'}
-                  </label>
-                  <input
-                    type="text"
-                    name="price"
-                    value={propertyForm.price}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder={propertyForm.purpose === 'Rent' ? '₹ Monthly rent' : '₹ Enter price'}
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* Purpose */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Purpose *</label>
+                        <select
+                          name="purpose"
+                          value={propertyForm.purpose}
+                          onChange={handleInputChange}
+                          className="form-select"
+                          style={inputStyle}
+                        >
+                          <option value="" style={{ color: 'black' }}>Select Purpose</option>
+                          <option value="Buy" style={{ color: 'black' }}>For Sale</option>
+                          <option value="Rent" style={{ color: 'black' }}>For Rent</option>
+                        </select>
+                      </div>
 
-                {/* Area */}
-                <div className="col-md-4">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Area (sq.ft)</label>
-                  <input
-                    type="text"
-                    name="area"
-                    value={propertyForm.area}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder="e.g., 1200"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* Price/Rent */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>
+                          {propertyForm.purpose === 'Rent' ? 'Monthly Rent *' : 'Price *'}
+                        </label>
+                        <input
+                          type="text"
+                          name={propertyForm.purpose === 'Rent' ? 'rent' : 'price'}
+                          value={propertyForm.purpose === 'Rent' ? propertyForm.rent : propertyForm.price}
+                          onChange={handleInputChange}
+                          className="form-control"
+                          placeholder={propertyForm.purpose === 'Rent' ? '₹ Monthly rent' : '₹ Enter price'}
+                          style={inputStyle}
+                        />
+                      </div>
 
-                {/* Bedrooms */}
-                <div className="col-md-4">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Bedrooms</label>
-                  <select
-                    name="bedrooms"
-                    value={propertyForm.bedrooms}
-                    onChange={handleInputChange}
-                    className="form-select"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  >
-                    <option value="">Select</option>
-                    <option value="1">1 BHK</option>
-                    <option value="2">2 BHK</option>
-                    <option value="3">3 BHK</option>
-                    <option value="4">4 BHK</option>
-                    <option value="5">5+ BHK</option>
-                  </select>
-                </div>
+                      {/* Area */}
+                      <div className="col-md-4">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Area (sq.ft)</label>
+                        <input
+                          type="text"
+                          name="area"
+                          value={propertyForm.area}
+                          onChange={handleInputChange}
+                          className="form-control"
+                          placeholder="e.g., 1200"
+                          style={inputStyle}
+                        />
+                      </div>
 
-                {/* Bathrooms */}
-                <div className="col-md-4">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Bathrooms</label>
-                  <select
-                    name="bathrooms"
-                    value={propertyForm.bathrooms}
-                    onChange={handleInputChange}
-                    className="form-select"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  >
-                    <option value="">Select</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4+</option>
-                  </select>
-                </div>
+                      {/* Bedrooms - Residential Only */}
+                      {(isResidential) && (
+                        <motion.div
+                          className="col-md-4"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                        >
+                          <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Bedrooms</label>
+                          <select
+                            name="bedrooms"
+                            value={propertyForm.bedrooms}
+                            onChange={handleInputChange}
+                            className="form-select"
+                            style={inputStyle}
+                          >
+                            <option value="" style={{ color: 'black' }}>Select</option>
+                            <option value="1" style={{ color: 'black' }}>1 BHK</option>
+                            <option value="2" style={{ color: 'black' }}>2 BHK</option>
+                            <option value="3" style={{ color: 'black' }}>3 BHK</option>
+                            <option value="4" style={{ color: 'black' }}>4 BHK</option>
+                            <option value="5" style={{ color: 'black' }}>5+ BHK</option>
+                          </select>
+                        </motion.div>
+                      )}
 
-                {/* City */}
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>City</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={propertyForm.city}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder="Enter city"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* Bathrooms - Residential & Commercial */}
+                      {(!isLand) && (
+                        <motion.div
+                          className="col-md-4"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                        >
+                          <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>
+                            {isCommercial ? 'Washrooms' : 'Bathrooms'}
+                          </label>
+                          <select
+                            name="bathrooms"
+                            value={propertyForm.bathrooms}
+                            onChange={handleInputChange}
+                            className="form-select"
+                            style={inputStyle}
+                          >
+                            <option value="" style={{ color: 'black' }}>Select</option>
+                            <option value="1" style={{ color: 'black' }}>1</option>
+                            <option value="2" style={{ color: 'black' }}>2</option>
+                            <option value="3" style={{ color: 'black' }}>3</option>
+                            <option value="4" style={{ color: 'black' }}>4+</option>
+                          </select>
+                        </motion.div>
+                      )}
 
-                {/* Locality */}
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Locality</label>
-                  <input
-                    type="text"
-                    name="locality"
-                    value={propertyForm.locality}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder="Enter locality/area"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* City */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>City</label>
+                        <input
+                          type="text"
+                          name="city"
+                          value={propertyForm.city}
+                          onChange={handleInputChange}
+                          className="form-control"
+                          placeholder="Enter city"
+                          style={inputStyle}
+                        />
+                      </div>
 
-                {/* Possession Status */}
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Possession Status</label>
-                  <select
-                    name="possession"
-                    value={propertyForm.possession}
-                    onChange={handleInputChange}
-                    className="form-select"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  >
-                    <option value="">Select Status</option>
-                    <option value="Ready to Move">Ready to Move</option>
-                    <option value="Under Construction">Under Construction</option>
-                    <option value="Immediate">Immediate</option>
-                  </select>
-                </div>
+                      {/* Locality */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Locality</label>
+                        <input
+                          type="text"
+                          name="locality"
+                          value={propertyForm.locality}
+                          onChange={handleInputChange}
+                          className="form-control"
+                          placeholder="Enter locality/area"
+                          style={inputStyle}
+                        />
+                      </div>
 
-                {/* Construction Status */}
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Construction Status</label>
-                  <select
-                    name="constructionStatus"
-                    value={propertyForm.constructionStatus}
-                    onChange={handleInputChange}
-                    className="form-select"
-                    style={{ borderRadius: '10px', padding: '12px 16px', background: 'var(--off-white)', color: 'var(--primary-text)', border: 'none' }}
-                  >
-                    <option value="">Select Status</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Under Construction">Under Construction</option>
-                    <option value="New Launch">New Launch</option>
-                  </select>
-                </div>
+                      {/* Possession Status */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Possession Status</label>
+                        <select
+                          name="possession"
+                          value={propertyForm.possession}
+                          onChange={handleInputChange}
+                          className="form-select"
+                          style={inputStyle}
+                        >
+                          <option value="" style={{ color: 'black' }}>Select Status</option>
+                          <option value="Ready to Move" style={{ color: 'black' }}>Ready to Move</option>
+                          <option value="Under Construction" style={{ color: 'black' }}>Under Construction</option>
+                          <option value="Immediate" style={{ color: 'black' }}>Immediate</option>
+                        </select>
+                      </div>
 
-                {/* Availability Status */}
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Availability Status</label>
-                  <select
-                    name="availability"
-                    value={propertyForm.availability}
-                    onChange={handleInputChange}
-                    className="form-select"
-                    style={{ borderRadius: '10px', padding: '12px 16px', background: 'var(--off-white)', color: 'var(--primary-text)', border: 'none' }}
-                  >
-                    <option value="available">Available</option>
-                    <option value="sold">Sold Out</option>
-                    <option value="booked">Booked</option>
-                  </select>
-                </div>
+                      {/* Construction Status */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Construction Status</label>
+                        <select
+                          name="constructionStatus"
+                          value={propertyForm.constructionStatus}
+                          onChange={handleInputChange}
+                          className="form-select"
+                          style={inputStyle}
+                        >
+                          <option value="" style={{ color: 'black' }}>Select Status</option>
+                          <option value="Completed" style={{ color: 'black' }}>Completed</option>
+                          <option value="Under Construction" style={{ color: 'black' }}>Under Construction</option>
+                          <option value="New Launch" style={{ color: 'black' }}>New Launch</option>
+                        </select>
+                      </div>
 
-                {/* Brochure URL */}
-                <div className="col-md-4">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Brochure URL</label>
-                  <input
-                    type="text"
-                    name="brochureUrl"
-                    value={propertyForm.brochureUrl}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder="Link to PDF brochure"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* Availability Status */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Availability Status</label>
+                        <select
+                          name="availability"
+                          value={propertyForm.availability}
+                          onChange={handleInputChange}
+                          className="form-select"
+                          style={inputStyle}
+                        >
+                          <option value="available" style={{ color: 'black' }}>Available</option>
+                          <option value="sold" style={{ color: 'black' }}>Sold Out</option>
+                          <option value="booked" style={{ color: 'black' }}>Booked</option>
+                        </select>
+                      </div>
 
-                {/* Google Map Link */}
-                <div className="col-md-4">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Google Map Link</label>
-                  <input
-                    type="text"
-                    name="googleMapLink"
-                    value={propertyForm.googleMapLink}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder="Map location URL"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* Brochure Upload */}
+                      <div className="col-md-4">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>
+                          <i className="bi bi-file-pdf me-1" style={{ color: '#DC2626' }}></i>
+                          Brochure (PDF)
+                        </label>
+                        <div className="d-flex flex-column gap-2">
+                          {/* File Upload */}
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              type="file"
+                              accept=".pdf,application/pdf"
+                              id="brochureUpload"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  if (file.type !== 'application/pdf') {
+                                    alert('Please upload a PDF file');
+                                    return;
+                                  }
+                                  if (file.size > 10 * 1024 * 1024) {
+                                    alert('File size must be less than 10MB');
+                                    return;
+                                  }
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    setPropertyForm(prev => ({
+                                      ...prev,
+                                      brochureUrl: event.target.result
+                                    }));
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="form-control"
+                              style={{
+                                ...inputStyle,
+                                cursor: 'pointer'
+                              }}
+                            />
+                          </div>
+                          {/* Or URL input */}
+                          <div className="d-flex align-items-center gap-2">
+                            <span style={{ color: '#64748B', fontSize: '0.8rem' }}>or paste URL:</span>
+                            <input
+                              type="text"
+                              name="brochureUrl"
+                              value={propertyForm.brochureUrl?.startsWith('data:') ? '' : propertyForm.brochureUrl}
+                              onChange={handleInputChange}
+                              className="form-control"
+                              placeholder="https://..."
+                              style={{ ...inputStyle, flex: 1, padding: '8px 12px' }}
+                            />
+                          </div>
+                          {propertyForm.brochureUrl && (
+                            <div className="d-flex align-items-center gap-2 mt-1">
+                              <i className="bi bi-check-circle-fill" style={{ color: '#10B981' }}></i>
+                              <span style={{ color: '#10B981', fontSize: '0.85rem' }}>
+                                {propertyForm.brochureUrl.startsWith('data:') ? 'PDF uploaded' : 'URL set'}
+                              </span>
+                              <button
+                                type="button"
+                                className="btn btn-sm"
+                                onClick={() => setPropertyForm(prev => ({ ...prev, brochureUrl: '' }))}
+                                style={{ color: '#DC2626', background: 'transparent', border: 'none', padding: '2px 8px' }}
+                              >
+                                <i className="bi bi-x-circle"></i> Remove
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                {/* Virtual Tour Link */}
-                <div className="col-md-4">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Virtual Tour Link</label>
-                  <input
-                    type="text"
-                    name="virtualTourLink"
-                    value={propertyForm.virtualTourLink}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder="Video/3D tour URL"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* Google Map Link */}
+                      <div className="col-md-4">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Google Map Link</label>
+                        <input
+                          type="text"
+                          name="googleMapLink"
+                          value={propertyForm.googleMapLink}
+                          onChange={handleInputChange}
+                          className="form-control"
+                          placeholder="Map location URL"
+                          style={inputStyle}
+                        />
+                      </div>
 
-                {/* Description */}
-                <div className="col-12">
-                  <label className="form-label fw-semibold" style={{ color: '#0F172A' }}>Description</label>
-                  <textarea
-                    name="description"
-                    value={propertyForm.description}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    rows="4"
-                    placeholder="Describe the property features, location advantages, nearby facilities..."
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* Virtual Tour Link */}
+                      <div className="col-md-4">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>360° Panorama Image URL</label>
+                        <input
+                          type="text"
+                          name="virtualTourLink"
+                          value={propertyForm.virtualTourLink}
+                          onChange={handleInputChange}
+                          className="form-control"
+                          placeholder="URL to 360° panoramic image"
+                          style={inputStyle}
+                        />
+                        <small style={{ color: 'var(--secondary-text)' }}>Provide URL to equirectangular 360° image</small>
+                      </div>
 
-                {/* Amenities */}
-                <div className="col-12">
-                  <label className="form-label fw-semibold" style={{ color: '#0F172A' }}>Amenities</label>
-                  <input
-                    type="text"
-                    name="amenities"
-                    value={propertyForm.amenities}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder="Enter amenities separated by commas (e.g., Pool, Gym, Parking, Garden)"
-                    style={{ borderRadius: '10px', padding: '12px 16px', border: '1px solid #E2E8F0' }}
-                  />
-                </div>
+                      {/* Property Location Section */}
+                      <div className="col-12">
+                        <div style={{
+                          background: 'rgba(200,162,74,0.05)',
+                          border: '1px solid rgba(200,162,74,0.2)',
+                          borderRadius: '16px',
+                          padding: '24px',
+                          marginTop: '16px'
+                        }}>
+                          <h5 className="fw-bold mb-3" style={{ color: 'var(--primary-text)' }}>
+                            <i className="bi bi-geo-alt-fill me-2" style={{ color: 'var(--construction-gold)' }}></i>
+                            Property Location (Map Pin)
+                          </h5>
+                          <p style={{ color: 'var(--secondary-text)', fontSize: '0.9rem', marginBottom: '16px' }}>
+                            Pin your property location on the map. Users will see this pin when viewing your property.
+                          </p>
+                          <MapLocationPicker
+                            initialPosition={propertyForm.latitude && propertyForm.longitude ? {
+                              lat: parseFloat(propertyForm.latitude),
+                              lng: parseFloat(propertyForm.longitude)
+                            } : null}
+                            onLocationChange={(location) => {
+                              if (location) {
+                                setPropertyForm(prev => ({
+                                  ...prev,
+                                  latitude: location.latitude,
+                                  longitude: location.longitude,
+                                  mapLink: location.mapLink || prev.mapLink
+                                }));
+                              }
+                            }}
+                            height="300px"
+                          />
+                        </div>
+                      </div>
 
-                {/* Images */}
-                <div className="col-12">
-                  <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Property Images</label>
-                  <div className="mb-3">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="form-control mb-2"
-                      style={{ background: 'var(--off-white)', color: 'var(--primary-text)', border: 'none' }}
-                    />
-                  </div>
-                  <input
-                    style={{ borderRadius: '10px', padding: '12px 16px', background: 'var(--off-white)', color: 'var(--primary-text)', border: 'none' }}
-                    readOnly
-                    value={Array.isArray(propertyForm.images) ? `${propertyForm.images.length} images selected` : ''}
-                  />
-                </div>
+                      {/* Description */}
+                      <div className="col-12">
+                        <label className="form-label fw-semibold" style={{ color: '#0F172A' }}>Description</label>
+                        <textarea
+                          name="description"
+                          value={propertyForm.description}
+                          onChange={handleInputChange}
+                          className="form-control"
+                          rows="4"
+                          placeholder="Describe the property features, location advantages, nearby facilities..."
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Amenities */}
+                      <div className="col-12">
+                        <label className="form-label fw-semibold" style={{ color: '#0F172A' }}>Amenities</label>
+                        <input
+                          type="text"
+                          name="amenities"
+                          value={propertyForm.amenities}
+                          onChange={handleInputChange}
+                          className="form-control"
+                          placeholder="Enter amenities separated by commas (e.g., Pool, Gym, Parking, Garden)"
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* Images */}
+                      <div className="col-12">
+                        <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Property Images</label>
+                        <div className="mb-3">
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="form-control mb-2"
+                            style={{ background: 'var(--off-white)', color: 'var(--primary-text)', border: 'none' }}
+                          />
+                        </div>
+                        <input
+                          style={{ borderRadius: '10px', padding: '12px 16px', background: 'var(--off-white)', color: 'var(--primary-text)', border: 'none' }}
+                          readOnly
+                          value={Array.isArray(propertyForm.images) ? `${propertyForm.images.length} images selected` : ''}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <div className="mt-4 pt-3 d-flex gap-3" style={{ borderTop: '1px solid #E2E8F0' }}>
+              <div className="mt-4 pt-3 d-flex gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                 <button
                   type="submit"
                   className="btn"

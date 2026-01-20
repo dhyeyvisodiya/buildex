@@ -2,13 +2,7 @@ import { neon, neonConfig } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 
 // Configure Neon to allow browser usage without warnings (for prototyping)
-neonConfig.fetchConnectionCache = true;
-// Suppress warning in dev/test for browser usage
-try {
-  neonConfig.disableWarningInBrowsers = true;
-} catch (e) {
-  // Ignore if property doesn't exist in this version
-}
+// neonConfig.fetchConnectionCache = true; (Deprecated in recent versions)
 
 // Initialize NeonDB connection
 let sql;
@@ -32,22 +26,10 @@ export default sql;
 // Initialize database tables
 export async function initializeDatabase() {
   try {
-    // Check if tables already exist by querying users table
-    const tableCheck = await sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'users'
-      )
-    `;
+    console.log('Checking database schema...');
 
-    if (tableCheck[0]?.exists) {
-      console.log('Database tables already exist');
-      return true;
-    }
-
-    // If tables don't exist, create them
     // Users table
+
     await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -68,22 +50,25 @@ export async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS properties (
         id SERIAL PRIMARY KEY,
         builder_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-        name VARCHAR(200) NOT NULL,
-        type VARCHAR(50) NOT NULL,
+        title VARCHAR(200) NOT NULL,
+        property_type VARCHAR(50) NOT NULL,
         purpose VARCHAR(20) NOT NULL CHECK (purpose IN ('Buy', 'Rent')),
         price VARCHAR(50),
-        rent VARCHAR(50),
-        area VARCHAR(50),
+        rent_amount VARCHAR(50),
+        area_sqft VARCHAR(50),
         city VARCHAR(100),
-        locality VARCHAR(100),
-        possession VARCHAR(50),
+        area VARCHAR(100),
+        possession_year VARCHAR(50),
         construction_status VARCHAR(50),
+        description TEXT,
+        bedrooms INTEGER,
+        bathrooms INTEGER,
         amenities TEXT[],
         images TEXT[],
         brochure_url TEXT,
         google_map_link TEXT,
         virtual_tour_link TEXT,
-        availability VARCHAR(20) DEFAULT 'available' CHECK (availability IN ('available', 'booked', 'sold')),
+        availability_status VARCHAR(20) DEFAULT 'AVAILABLE',
         status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'blocked')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

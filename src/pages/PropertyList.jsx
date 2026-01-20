@@ -1,17 +1,35 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import PropertyCard from '../components/PropertyCard';
-import { getProperties } from '../../api/apiService';
+import LocationSearch from '../components/LocationSearch';
+import PropertyMap from '../components/PropertyMap';
+import { getProperties, getNearbyProperties } from '../../api/apiService';
+import { useGeolocation } from '../lib/useGeolocation';
 
-const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
+const PropertyList = ({ addToCompare, addToWishlist }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [properties, setProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cities, setCities] = useState([]);
   const [localities, setLocalities] = useState([]);
 
+  // View toggle: 'list' or 'map'
+  const [viewMode, setViewMode] = useState('list');
+
+  // Map center state
+  const [mapCenter, setMapCenter] = useState({ lat: 19.0760, lng: 72.8777 });
+
+  // Geolocation hook
+  const { location: userLocation, loading: geoLoading, error: geoError, permissionDenied, requestLocation } = useGeolocation();
+
+  // Nearby mode
+  const [nearbyMode, setNearbyMode] = useState(false);
+
   const [filters, setFilters] = useState({
     type: '',
-    purpose: '',
+    purpose: location.state?.purpose || '',
     city: '',
     locality: '',
     search: ''
@@ -22,8 +40,17 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
     fetchProperties();
   }, []);
 
+  // Handle location from search or geolocation
+  useEffect(() => {
+    if (userLocation && nearbyMode) {
+      fetchNearbyProperties(userLocation.latitude, userLocation.longitude);
+      setMapCenter({ lat: userLocation.latitude, lng: userLocation.longitude });
+    }
+  }, [userLocation, nearbyMode]);
+
   const fetchProperties = async () => {
     setLoading(true);
+    setNearbyMode(false);
     try {
       const result = await getProperties();
       if (result.success) {
@@ -41,8 +68,72 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
     }
   };
 
+  const fetchNearbyProperties = async (lat, lng, radius = 10) => {
+    setLoading(true);
+    try {
+      const result = await getNearbyProperties(lat, lng, radius);
+      if (result.success) {
+        setFilteredProperties(result.data);
+      } else {
+        setFilteredProperties([]);
+      }
+    } catch (error) {
+      console.error('Error fetching nearby properties:', error);
+      setFilteredProperties([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle "Near Me" button click
+  const handleNearMe = () => {
+    setNearbyMode(true);
+    requestLocation();
+  };
+
+  // Handle location selected from search
+  const handleLocationSelect = (location) => {
+    if (location) {
+      setMapCenter({ lat: location.latitude, lng: location.longitude });
+
+      // First try to filter by city name match
+      const cityName = location.city?.toLowerCase();
+      const areaName = location.area?.toLowerCase();
+
+      let matchedProperties = properties.filter(p => {
+        const propCity = p.city?.toLowerCase() || '';
+        const propLocality = p.locality?.toLowerCase() || '';
+        return propCity.includes(cityName || '') ||
+          propLocality.includes(cityName || '') ||
+          propCity.includes(areaName || '') ||
+          propLocality.includes(areaName || '');
+      });
+
+      // If we have good matches, show those
+      if (matchedProperties.length > 0) {
+        setFilteredProperties(matchedProperties);
+        setNearbyMode(false);
+      } else {
+        // Otherwise, search by proximity (within 50km radius)
+        setNearbyMode(true);
+        fetchNearbyProperties(location.latitude, location.longitude, 50);
+      }
+
+      // Also update city filter if exact match exists
+      if (location.city && cities.includes(location.city)) {
+        setFilters(prev => ({ ...prev, city: location.city }));
+      }
+    } else {
+      // Clear was clicked, reset to all properties
+      setNearbyMode(false);
+      fetchProperties();
+    }
+  };
+
   // Apply filters when they change
   useEffect(() => {
+    if (nearbyMode) return; // Skip filtering in nearby mode
+
     let result = properties;
 
     if (filters.type) {
@@ -69,14 +160,14 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
       result = result.filter(property =>
-        property.name.toLowerCase().includes(searchTerm) ||
-        property.city.toLowerCase().includes(searchTerm) ||
-        property.locality.toLowerCase().includes(searchTerm)
+        property.name?.toLowerCase().includes(searchTerm) ||
+        property.city?.toLowerCase().includes(searchTerm) ||
+        property.locality?.toLowerCase().includes(searchTerm)
       );
     }
 
     setFilteredProperties(result);
-  }, [filters, properties]);
+  }, [filters, properties, nearbyMode]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -96,6 +187,12 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
       search: ''
     });
     setLocalities([]);
+    setNearbyMode(false);
+    fetchProperties();
+  };
+
+  const handleMarkerClick = (property) => {
+    navigate(`/property/${property.id}`);
   };
 
   return (
@@ -144,28 +241,111 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
             Filter Properties
           </h5>
 
-          {/* Search Bar */}
-          <div className="mb-4">
-            <div className="input-group">
-              <span className="input-group-text" style={{ background: 'var(--off-white)', border: 'none', color: 'var(--construction-gold)' }}>
-                <i className="bi bi-search"></i>
-              </span>
-              <input
-                type="text"
-                className="form-control"
-                name="search"
-                value={filters.search}
-                onChange={handleFilterChange}
-                placeholder="Search by property name, city, or locality..."
-                style={{
-                  background: 'var(--off-white)',
-                  border: 'none',
-                  color: 'var(--primary-text)',
-                  padding: '12px'
-                }}
+          {/* Location Search with Near Me */}
+          <div className="row g-3 mb-4 align-items-center">
+            <div className="col-md-6">
+              <LocationSearch
+                onLocationSelect={handleLocationSelect}
+                placeholder="Search by city or area..."
               />
             </div>
+            <div className="col-md-3">
+              <button
+                className="btn w-100"
+                onClick={handleNearMe}
+                disabled={geoLoading}
+                style={{
+                  background: nearbyMode ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                  color: 'white',
+                  padding: '12px 20px',
+                  borderRadius: '10px',
+                  fontWeight: '600',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  height: '48px'
+                }}
+              >
+                {geoLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm"></span>
+                    Locating...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-crosshair"></i>
+                    Near Me
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="col-md-3">
+              {/* View Toggle */}
+              <div className="btn-group w-100" role="group" style={{ height: '48px' }}>
+                <button
+                  type="button"
+                  className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                  onClick={() => setViewMode('list')}
+                  style={{
+                    background: viewMode === 'list' ? 'var(--construction-gold)' : 'transparent',
+                    border: viewMode === 'list' ? 'none' : '1px solid rgba(200,162,74,0.5)',
+                    color: viewMode === 'list' ? '#0F172A' : '#F8FAFC',
+                    height: '100%'
+                  }}
+                >
+                  <i className="bi bi-list-ul me-1"></i>List
+                </button>
+                <button
+                  type="button"
+                  className={`btn ${viewMode === 'map' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                  onClick={() => setViewMode('map')}
+                  style={{
+                    background: viewMode === 'map' ? 'var(--construction-gold)' : 'transparent',
+                    border: viewMode === 'map' ? 'none' : '1px solid rgba(200,162,74,0.5)',
+                    color: viewMode === 'map' ? '#0F172A' : '#F8FAFC',
+                    height: '100%'
+                  }}
+                >
+                  <i className="bi bi-map me-1"></i>Map
+                </button>
+              </div>
+            </div>
           </div>
+
+          {/* Permission Denied Message */}
+          {permissionDenied && (
+            <div className="alert mb-4" style={{
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              borderRadius: '12px',
+              color: 'var(--primary-text)'
+            }}>
+              <i className="bi bi-info-circle me-2" style={{ color: '#F59E0B' }}></i>
+              📍 Location access is required to show properties near you. Please enable location permissions or search manually.
+            </div>
+          )}
+
+          {/* Nearby Mode Indicator */}
+          {nearbyMode && userLocation && (
+            <div className="alert mb-4" style={{
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '12px',
+              color: 'var(--primary-text)'
+            }}>
+              <i className="bi bi-geo-alt-fill me-2" style={{ color: '#10B981' }}></i>
+              <strong>Showing properties near you</strong> (within 10 km)
+              <button
+                className="btn btn-sm ms-3"
+                onClick={clearFilters}
+                style={{ background: 'transparent', color: '#10B981', border: '1px solid #10B981' }}
+              >
+                Show All Properties
+              </button>
+            </div>
+          )}
 
           <div className="row g-3">
             <div className="col-md-3">
@@ -209,31 +389,6 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
                 <option value="">Both</option>
                 <option value="Buy">Buy</option>
                 <option value="Rent">Rent</option>
-              </select>
-            </div>
-
-            <div className="col-md-3">
-              <label className="form-label fw-semibold" style={{ color: 'var(--primary-text)' }}>Price Range (Max)</label>
-              <select
-                className="form-select"
-                name="priceRange"
-                value={filters.priceRange}
-                onChange={handleFilterChange}
-                style={{
-                  borderRadius: '10px',
-                  padding: '12px 16px',
-                  background: 'var(--off-white)',
-                  color: 'var(--primary-text)',
-                  border: 'none',
-                  fontSize: '0.95rem'
-                }}
-              >
-                <option value="">Any Price</option>
-                <option value="100000">Up to $100,000</option>
-                <option value="250000">Up to $250,000</option>
-                <option value="500000">Up to $500,000</option>
-                <option value="1000000">Up to $1,000,000</option>
-                <option value="2000000">Up to $2,000,000</option>
               </select>
             </div>
 
@@ -331,7 +486,9 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
             }}>
               {filteredProperties.length}
             </span>
-            <h5 className="mb-0" style={{ color: '#0F172A' }}>Properties Found</h5>
+            <h5 className="mb-0" style={{ color: '#0F172A' }}>
+              {nearbyMode ? 'Properties Near You' : 'Properties Found'}
+            </h5>
           </div>
         </div>
 
@@ -345,21 +502,97 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
           </div>
         )}
 
+        {/* Map View */}
+        {!loading && viewMode === 'map' && (
+          <div className="mb-4">
+            {filteredProperties.length > 0 ? (
+              <PropertyMap
+                properties={filteredProperties}
+                center={mapCenter}
+                zoom={nearbyMode ? 13 : 11}
+                height="500px"
+                onMarkerClick={handleMarkerClick}
+              />
+            ) : (
+              <div className="text-center py-5" style={{
+                background: '#0F1E33',
+                borderRadius: '16px',
+                border: '1px solid #E2E8F0',
+                height: '500px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <div style={{
+                  width: '100px',
+                  height: '100px',
+                  background: 'linear-gradient(135deg, #C8A24A20, #C8A24A10)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <i className="bi bi-geo-alt" style={{ fontSize: '3rem', color: '#C8A24A' }}></i>
+                </div>
+                <h4 style={{ color: '#F8FAFC' }}>No properties found in this area</h4>
+                <p style={{ color: '#64748B', maxWidth: '400px', margin: '0 auto 20px' }}>
+                  Try searching a different location or clearing filters
+                </p>
+                <button
+                  className="btn"
+                  onClick={clearFilters}
+                  style={{
+                    background: 'linear-gradient(135deg, #C8A24A, #9E7C2F)',
+                    color: '#0F172A',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    fontWeight: '600',
+                    border: 'none'
+                  }}
+                >
+                  Clear Filters & Show All
+                </button>
+              </div>
+            )}
+            <p className="text-center mt-2" style={{ color: '#64748B', fontSize: '0.85rem' }}>
+              <i className="bi bi-info-circle me-1"></i>
+              Click on any property pin to view details
+            </p>
+          </div>
+        )}
+
         {/* Property Cards */}
-        {!loading && filteredProperties.length > 0 ? (
+        {!loading && viewMode === 'list' && filteredProperties.length > 0 ? (
           <div className="row g-4">
             {filteredProperties.map((property, index) => (
               <div className="col-lg-4 col-md-6 animate__animated animate__fadeInUp" key={property.id} style={{ animationDelay: `${index * 0.1}s` }}>
                 <PropertyCard
                   property={property}
-                  navigateTo={navigateTo}
                   addToCompare={addToCompare}
                   addToWishlist={addToWishlist}
                 />
+                {/* Show distance badge for nearby properties */}
+                {property.distance && (
+                  <div className="mt-2 text-center">
+                    <span style={{
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      color: '#10B981',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.85rem',
+                      fontWeight: '500'
+                    }}>
+                      <i className="bi bi-pin-map me-1"></i>
+                      {property.distance.toFixed(1)} km away
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
-        ) : !loading && (
+        ) : !loading && viewMode === 'list' && (
           <div className="text-center py-5" style={{
             background: '#0F1E33',
             borderRadius: '16px',
@@ -377,9 +610,12 @@ const PropertyList = ({ navigateTo, addToCompare, addToWishlist }) => {
             }}>
               <i className="bi bi-search" style={{ fontSize: '3rem', color: '#C8A24A' }}></i>
             </div>
-            <h4 style={{ color: '#0F172A' }}>No properties found</h4>
+            <h4 style={{ color: '#F8FAFC' }}>No properties found</h4>
             <p style={{ color: '#64748B', maxWidth: '400px', margin: '0 auto 20px' }}>
-              Try adjusting your filters or check back later for new listings
+              {nearbyMode
+                ? 'No properties found within 10 km of your location. Try searching a different area.'
+                : 'Try adjusting your filters or check back later for new listings'
+              }
             </p>
             <button
               className="btn"
