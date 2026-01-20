@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import pannellum from 'pannellum';
+import 'pannellum';
 import 'pannellum/build/pannellum.css';
 
 /**
@@ -86,37 +86,40 @@ const PanoramaViewer = ({
             }
 
             try {
-                viewerRef.current = pannellum.viewer(containerId.current, {
-                    type: 'equirectangular',
-                    panorama: processedUrl,
-                    autoLoad: true,
-                    autoRotate: -2,
-                    compass: true,
-                    showControls: true,
-                    showFullscreenCtrl: true,
-                    showZoomCtrl: true,
-                    hfov: 110,
-                    pitch: 0,
-                    yaw: 0,
-                    title: title,
-                    author: 'BuildEx',
-                    hotSpotDebug: false
-                });
+                // Access pannellum from window object
+                if (window.pannellum) {
+                    viewerRef.current = window.pannellum.viewer(containerId.current, {
 
-                // Force check loading state
-                // Pannellum doesn't emit 'load' reliably for equirectangular sometimes
-                setTimeout(() => setLoading(false), 1000);
+                        type: 'equirectangular',
+                        panorama: processedUrl,
+                        autoLoad: true,
+                        autoRotate: -2,
+                        compass: true,
+                        showControls: true,
+                        showFullscreenCtrl: true,
+                        showZoomCtrl: true,
+                        hfov: 110,
+                        pitch: 0,
+                        yaw: 0,
+                        title: title,
+                        author: 'BuildEx',
+                        hotSpotDebug: false
+                    });
 
-                viewerRef.current.on('load', () => {
-                    setLoading(false);
-                });
+                    // Force check loading state
+                    // Pannellum doesn't emit 'load' reliably for equirectangular sometimes
+                    setTimeout(() => setLoading(false), 1000);
 
-                viewerRef.current.on('error', (err) => {
-                    console.error("Pannellum error:", err);
-                    setError(true);
-                    setLoading(false);
-                });
+                    viewerRef.current.on('load', () => {
+                        setLoading(false);
+                    });
 
+                    viewerRef.current.on('error', (err) => {
+                        console.error("Pannellum error:", err);
+                        setError(true);
+                        setLoading(false);
+                    });
+                }
             } catch (e) {
                 console.error('Pannellum init error:', e);
                 setError(true);
