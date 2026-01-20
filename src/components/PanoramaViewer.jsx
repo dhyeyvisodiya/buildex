@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import pannellum from 'pannellum';
+import 'pannellum/build/pannellum.css';
 
 /**
  * PanoramaViewer component for 360° property views
@@ -13,58 +15,9 @@ const PanoramaViewer = ({
     const [loading, setLoading] = useState(true);
     const [processedUrl, setProcessedUrl] = useState(null);
     const [error, setError] = useState(false);
-    const [pannellumReady, setPannellumReady] = useState(false);
     const containerRef = useRef(null);
     const viewerRef = useRef(null);
     const containerId = useRef(`panorama-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-
-    // Load Pannellum library
-    useEffect(() => {
-        // Load CSS
-        if (!document.getElementById('pannellum-css')) {
-            const link = document.createElement('link');
-            link.id = 'pannellum-css';
-            link.rel = 'stylesheet';
-            link.href = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css';
-            document.head.appendChild(link);
-        }
-
-        // Load JS
-        if (window.pannellum) {
-            setPannellumReady(true);
-        } else if (!document.getElementById('pannellum-js')) {
-            const script = document.createElement('script');
-            script.id = 'pannellum-js';
-            script.src = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js';
-            script.onload = () => {
-                setPannellumReady(true);
-            };
-            script.onerror = () => {
-                console.error("Failed to load Pannellum script");
-                setError(true);
-                setLoading(false);
-            };
-            document.body.appendChild(script);
-        } else {
-            // Script is loading, wait for it
-            const checkInterval = setInterval(() => {
-                if (window.pannellum) {
-                    setPannellumReady(true);
-                    clearInterval(checkInterval);
-                }
-            }, 100);
-
-            // Timeout after 5 seconds
-            setTimeout(() => {
-                clearInterval(checkInterval);
-                if (!window.pannellum) {
-                    console.error("Pannellum load timeout");
-                    setError(true);
-                    setLoading(false);
-                }
-            }, 5000);
-        }
-    }, []);
 
     // Process Image URL (Proxy if needed)
     useEffect(() => {
@@ -111,9 +64,9 @@ const PanoramaViewer = ({
     }, [imageUrl]);
 
 
-    // Initialize viewer when library and url are ready
+    // Initialize viewer when url is ready
     useEffect(() => {
-        if (!pannellumReady || !processedUrl) {
+        if (!processedUrl) {
             return;
         }
 
@@ -125,15 +78,15 @@ const PanoramaViewer = ({
             viewerRef.current = null;
         }
 
-        // Initialize after a short delay
+        // Initialize after a short delay to ensure DOM is ready
         const initTimer = setTimeout(() => {
             const container = document.getElementById(containerId.current);
-            if (!container || !window.pannellum) {
+            if (!container) {
                 return;
             }
 
             try {
-                viewerRef.current = window.pannellum.viewer(containerId.current, {
+                viewerRef.current = pannellum.viewer(containerId.current, {
                     type: 'equirectangular',
                     panorama: processedUrl,
                     autoLoad: true,
@@ -152,7 +105,6 @@ const PanoramaViewer = ({
 
                 // Force check loading state
                 // Pannellum doesn't emit 'load' reliably for equirectangular sometimes
-                // We check if the canvas is populated or just trust it started
                 setTimeout(() => setLoading(false), 1000);
 
                 viewerRef.current.on('load', () => {
@@ -181,7 +133,7 @@ const PanoramaViewer = ({
                 viewerRef.current = null;
             }
         };
-    }, [pannellumReady, processedUrl, title]);
+    }, [processedUrl, title]);
 
     if (!imageUrl) {
         return (
